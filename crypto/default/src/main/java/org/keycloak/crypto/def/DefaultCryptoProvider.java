@@ -28,7 +28,6 @@ import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.jboss.logging.Logger;
 import org.keycloak.common.crypto.CryptoProvider;
 import org.keycloak.common.crypto.CryptoConstants;
