@@ -17,6 +17,7 @@
 
 package org.keycloak.testsuite.rest.resource;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.jboss.resteasy.reactive.NoCache;
 
@@ -27,6 +28,8 @@ import jakarta.ws.rs.Consumes;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
+import org.keycloak.common.crypto.CryptoConstants;
+import org.keycloak.common.util.Base64;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.common.util.PemUtils;
@@ -88,7 +91,6 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.security.spec.ECGenParameterSpec;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -212,15 +214,11 @@ public class TestingOIDCEndpointsApplicationResource {
         return keyPair;
     }
 
-    private static void checkPQC() {
-        if (Security.getProvider("BCPQC") == null) Security.addProvider(new BouncyCastlePQCProvider());
-    }
-
-    private KeyPair generateMldsaKey(String algorithm) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+    private KeyPair generateMldsaKey(String algorithm) throws NoSuchAlgorithmException {
         KeyPairGenerator keyGen;
-        checkPQC();
+        if (Security.getProvider(CryptoConstants.BC_PQC_PROVIDER_ID) == null) Security.addProvider(new BouncyCastlePQCProvider());
         try {
-            keyGen = KeyPairGenerator.getInstance(algorithm, "BCPQC");
+            keyGen = KeyPairGenerator.getInstance(algorithm, CryptoConstants.BC_PQC_PROVIDER_ID);
         } catch (NoSuchProviderException e) {
             throw new RuntimeException(e);
         }
@@ -247,8 +245,8 @@ public class TestingOIDCEndpointsApplicationResource {
     public Map<String, String> getKeysAsBase64() {
         // It seems that PemUtils.decodePrivateKey, decodePublicKey can only treat RSA type keys, not EC type keys. Therefore, these are not used.
         TestApplicationResourceProviderFactory.OIDCKeyData keyData = clientData.getFirstKey();
-        String privateKeyPem = Base64.getEncoder().encodeToString(keyData.getSigningKeyPair().getPrivate().getEncoded());
-        String publicKeyPem = Base64.getEncoder().encodeToString(keyData.getSigningKeyPair().getPublic().getEncoded());
+        String privateKeyPem = Base64.encodeBytes(keyData.getSigningKeyPair().getPrivate().getEncoded());
+        String publicKeyPem = Base64.encodeBytes(keyData.getSigningKeyPair().getPublic().getEncoded());
 
         Map<String, String> res = new HashMap<>();
         res.put(PRIVATE_KEY, privateKeyPem);
