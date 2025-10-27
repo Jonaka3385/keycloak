@@ -21,7 +21,6 @@ import org.keycloak.common.util.Base64;
 import org.keycloak.common.util.MultivaluedHashMap;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.component.ComponentValidationException;
-import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.models.KeycloakSession;
@@ -50,7 +49,7 @@ public class GeneratedMldsaKeyProviderFactory extends AbstractMldsaKeyProviderFa
 
     @Override
     public boolean createFallbackKeys(KeycloakSession session, KeyUse keyUse, String algorithm) {
-        if (keyUse.equals(KeyUse.SIG)) {
+        if (keyUse.equals(KeyUse.SIG) && JavaAlgorithm.isMldsaJavaAlgorithm(algorithm)) {
             RealmModel realm = session.getContext().getRealm();
 
             ComponentModel generated = new ComponentModel();
