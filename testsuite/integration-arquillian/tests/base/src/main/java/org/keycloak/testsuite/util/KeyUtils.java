@@ -5,7 +5,6 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.common.util.BouncyIntegration;
 import org.keycloak.common.util.MultivaluedHashMap;
-import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.crypto.KeyStatus;
 import org.keycloak.crypto.KeyType;

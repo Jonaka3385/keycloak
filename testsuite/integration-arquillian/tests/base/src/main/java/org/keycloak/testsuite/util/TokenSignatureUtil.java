@@ -16,7 +16,6 @@
  */
 package org.keycloak.testsuite.util;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -24,6 +23,7 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 import jakarta.ws.rs.core.Response;
 
@@ -31,13 +31,11 @@ import org.jboss.logging.Logger;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.ClientResource;
 import org.keycloak.common.crypto.CryptoIntegration;
-import org.keycloak.common.util.Base64;
 import org.keycloak.common.util.MultivaluedHashMap;
 import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.keys.GeneratedEcdsaKeyProviderFactory;
-import org.keycloak.keys.GeneratedEddsaKeyProviderFactory;
 import org.keycloak.keys.GeneratedMldsaKeyProviderFactory;
 import org.keycloak.keys.GeneratedRsaKeyProviderFactory;
 import org.keycloak.keys.KeyProvider;
@@ -123,7 +121,7 @@ public class TokenSignatureUtil {
                 break;
             case Algorithm.Ed25519:
             case Algorithm.Ed448:
-                registerKeyProvider(realm, "eddsaEllipticCurveKey", jwaAlgorithmName, GeneratedEddsaKeyProviderFactory.ID, adminClient, testContext);
+                registerKeyProvider(realm, "eddsaEllipticCurveKey", jwaAlgorithmName, "eddsa-generated", adminClient, testContext);
                 break;
             case Algorithm.MLDSA44:
             case Algorithm.MLDSA65:
@@ -178,8 +176,8 @@ public class TokenSignatureUtil {
             if (rep.getKid().equals(activeKid)) {
                 X509EncodedKeySpec publicKeySpec = null;
                 try {
-                    publicKeySpec = new X509EncodedKeySpec(Base64.decode(rep.getPublicKey()));
-                } catch (IOException e1) {
+                    publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(rep.getPublicKey()));
+                } catch (IllegalArgumentException e1) {
                     e1.printStackTrace();
                 }
                 KeyFactory kf = null;
