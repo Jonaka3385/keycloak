@@ -34,7 +34,7 @@ public enum SignatureAlgorithm {
     DSA_SHA1("http://www.w3.org/2000/09/xmldsig#dsa-sha1", "http://www.w3.org/2000/09/xmldsig#sha1", "SHA1withDSA"),
     MLDSA44("TBD", "TBD", "ML-DSA-44"),
     MLDSA65("TBD", "TBD", "ML-DSA-65"),
-    MLDSA87("TBD", "TBD", "ML-DSA-87"),
+    MLDSA87("TBD", "TBD", "ML-DSA-87")
     ;
     private final String xmlSignatureMethod;
     private final String xmlSignatureDigestMethod;
