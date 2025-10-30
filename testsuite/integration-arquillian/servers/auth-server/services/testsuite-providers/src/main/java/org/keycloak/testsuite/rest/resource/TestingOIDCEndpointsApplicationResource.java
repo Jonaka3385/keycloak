@@ -17,8 +17,6 @@
 
 package org.keycloak.testsuite.rest.resource;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.jboss.resteasy.reactive.NoCache;
 
 import javax.crypto.SecretKey;
@@ -28,7 +26,6 @@ import jakarta.ws.rs.Consumes;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
-import org.keycloak.common.crypto.CryptoConstants;
 import org.keycloak.common.util.Base64;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
@@ -85,10 +82,8 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.security.spec.ECGenParameterSpec;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -129,10 +124,10 @@ public class TestingOIDCEndpointsApplicationResource {
                                             @QueryParam("keepExistingKeys") Boolean keepExistingKeys,
                                             @QueryParam("kid") String kid) {
         try {
-            KeyPair keyPair;
+            KeyPair keyPair = null;
             KeyUse keyUse = KeyUse.SIG;
             if (jwaAlgorithm == null) jwaAlgorithm = Algorithm.RS256;
-            String keyType;
+            String keyType = null;
 
             switch (jwaAlgorithm) {
                 case Algorithm.RS256:

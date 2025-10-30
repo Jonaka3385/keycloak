@@ -36,7 +36,6 @@ import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.keys.GeneratedEcdsaKeyProviderFactory;
-import org.keycloak.keys.GeneratedEddsaKeyProviderFactory;
 import org.keycloak.keys.GeneratedMldsaKeyProviderFactory;
 import org.keycloak.keys.GeneratedRsaKeyProviderFactory;
 import org.keycloak.keys.KeyProvider;
@@ -122,7 +121,7 @@ public class TokenSignatureUtil {
                 break;
             case Algorithm.Ed25519:
             case Algorithm.Ed448:
-                registerKeyProvider(realm, "eddsaEllipticCurveKey", jwaAlgorithmName, GeneratedEddsaKeyProviderFactory.ID, adminClient, testContext);
+                registerKeyProvider(realm, "eddsaEllipticCurveKey", jwaAlgorithmName, "eddsa-generated", adminClient, testContext);
                 break;
             case Algorithm.MLDSA44:
             case Algorithm.MLDSA65:

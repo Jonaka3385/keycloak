@@ -16,9 +16,6 @@
  */
 package org.keycloak.keys;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-import org.keycloak.common.crypto.CryptoConstants;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.component.ComponentValidationException;
 import org.keycloak.crypto.Algorithm;
@@ -31,7 +28,6 @@ import org.keycloak.provider.ProviderConfigurationBuilder;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.Security;
 
 import static org.keycloak.provider.ProviderConfigProperty.LIST_TYPE;
 
