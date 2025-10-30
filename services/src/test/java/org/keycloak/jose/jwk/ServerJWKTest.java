@@ -129,12 +129,7 @@ public class ServerJWKTest {
 
     private boolean verify(byte[] data, byte[] signature, String javaAlgorithm, PublicKey key) throws Exception {
         Signature verifier;
-        if ( JavaAlgorithm.isMldsaJavaAlgorithm(javaAlgorithm) ) {
-            if (Security.getProvider(CryptoConstants.BC_PQC_PROVIDER_ID) == null) Security.addProvider(new BouncyCastlePQCProvider());
-            verifier = Signature.getInstance(javaAlgorithm, CryptoConstants.BC_PQC_PROVIDER_ID);
-        } else {
-            verifier = Signature.getInstance(javaAlgorithm);
-        }
+        verifier = Signature.getInstance(javaAlgorithm);
         verifier.initVerify(key);
         verifier.update(data);
         return verifier.verify(signature);

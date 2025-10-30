@@ -63,8 +63,7 @@ public abstract class AbstractMldsaKeyProviderFactory implements KeyProviderFact
             throw new IllegalArgumentException(algorithm + " is not supported");
         }
         try {
-            if (Security.getProvider(CryptoConstants.BC_PQC_PROVIDER_ID) == null) Security.addProvider(new BouncyCastlePQCProvider());
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm, CryptoConstants.BC_PQC_PROVIDER_ID);
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm);
             return keyGen.generateKeyPair();
         } catch (Exception e) {
             throw new RuntimeException(e);
