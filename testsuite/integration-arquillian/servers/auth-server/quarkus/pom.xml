@@ -357,7 +357,7 @@
                                 </goals>
                                 <configuration>
                                     <outputDirectory>${auth.server.home}/bin/client/lib</outputDirectory>
-                                    <includeArtifactIds>bc-fips,bcpkix-fips,bctls-fips,bcutil-fips</includeArtifactIds>
+                                    <includeArtifactIds>bc-fips,bctls-fips,bcutil-fips</includeArtifactIds>
                                 </configuration>
                             </execution>
                         </executions>

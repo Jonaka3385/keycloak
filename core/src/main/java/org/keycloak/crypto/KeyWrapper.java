@@ -100,10 +100,6 @@ public class KeyWrapper {
                     }
                 case KeyType.RSA:
                     return Algorithm.RS256;
-                case KeyType.OKP:
-                    return Algorithm.EdDSA;
-                case KeyType.AKP:
-                    return Algorithm.MLDSA65;
             }
         }
         return algorithm;

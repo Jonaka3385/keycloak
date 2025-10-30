@@ -214,12 +214,11 @@ public class TestingOIDCEndpointsApplicationResource {
         return keyPair;
     }
 
-    private KeyPair generateMldsaKey(String algorithm) throws NoSuchAlgorithmException {
+    private KeyPair generateMldsaKey(String algorithm) {
         KeyPairGenerator keyGen;
-        if (Security.getProvider(CryptoConstants.BC_PQC_PROVIDER_ID) == null) Security.addProvider(new BouncyCastlePQCProvider());
         try {
-            keyGen = KeyPairGenerator.getInstance(algorithm, CryptoConstants.BC_PQC_PROVIDER_ID);
-        } catch (NoSuchProviderException e) {
+            keyGen = KeyPairGenerator.getInstance(algorithm);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return keyGen.generateKeyPair();

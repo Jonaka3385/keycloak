@@ -109,6 +109,7 @@ public class JWSBuilder {
         return new EncodingBuilder();
     }
 
+
     protected String encodeHeader(String sigAlgName) {
         StringBuilder builder = new StringBuilder("{");
 
@@ -175,7 +176,7 @@ public class JWSBuilder {
             StringBuilder buffer = new StringBuilder();
             byte[] data = marshalContent();
             encode(signer.getAlgorithm(), data, buffer);
-            byte[] signature;
+            byte[] signature = null;
             try {
                 signature = signer.sign(buffer.toString().getBytes(StandardCharsets.UTF_8));
             } catch (Exception e) {
