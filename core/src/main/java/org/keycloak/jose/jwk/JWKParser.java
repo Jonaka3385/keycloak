@@ -19,13 +19,13 @@ package org.keycloak.jose.jwk;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.keycloak.common.crypto.CryptoIntegration;
@@ -156,17 +156,10 @@ public class JWKParser {
             throw new IllegalArgumentException("Missing 'pub' parameter in AKP-JWK");
         }
 
+        byte[] decodedKey = Base64.getDecoder().decode(pub);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decodedKey);
         try {
-            byte[] publicKeyBytes = Base64Url.decode(pub);
-
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
-
-            KeyFactory keyFactory;
-            try {
-                keyFactory = KeyFactory.getInstance(alg);
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("Failed to create AKP public key from JWK", e);
-            }
+            KeyFactory keyFactory = KeyFactory.getInstance(alg);
             return keyFactory.generatePublic(keySpec);
         } catch (Exception e) {
             throw new RuntimeException("Failed to create AKP public key from JWK", e);
