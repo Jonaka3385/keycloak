@@ -27,14 +27,10 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.Signature;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.keycloak.common.crypto.CryptoConstants;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
@@ -115,23 +111,17 @@ public class ServerJWKTest {
     }
 
     private byte[] sign(byte[] data, String javaAlgorithm, PrivateKey key) throws Exception {
-        Signature signature;
-        if ( JavaAlgorithm.isMldsaJavaAlgorithm(javaAlgorithm) ) {
-            if (Security.getProvider(CryptoConstants.BC_PROVIDER_ID) == null) Security.addProvider(new BouncyCastleProvider());
-            signature = Signature.getInstance(javaAlgorithm, CryptoConstants.BC_PROVIDER_ID);
-        } else {
-            signature = Signature.getInstance(javaAlgorithm);
-        }
+        Signature signature = Signature.getInstance(javaAlgorithm);
         signature.initSign(key);
         signature.update(data);
         return signature.sign();
     }
 
     private boolean verify(byte[] data, byte[] signature, String javaAlgorithm, PublicKey key) throws Exception {
-        Signature verifier;
-        verifier = Signature.getInstance(javaAlgorithm);
+        Signature verifier = Signature.getInstance(javaAlgorithm);
         verifier.initVerify(key);
         verifier.update(data);
         return verifier.verify(signature);
     }
+
 }
