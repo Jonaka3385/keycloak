@@ -199,7 +199,8 @@ public class BCFIPSUserIdentityExtractorProvider  extends UserIdentityExtractorP
 
 
         private ASN1Encodable unwrap(ASN1Encodable encodable) {
-            while (encodable instanceof ASN1TaggedObject taggedObj) {
+            while (encodable instanceof ASN1TaggedObject) {
+                ASN1TaggedObject taggedObj = (ASN1TaggedObject) encodable;
                 encodable = taggedObj.getObject();
             }
 

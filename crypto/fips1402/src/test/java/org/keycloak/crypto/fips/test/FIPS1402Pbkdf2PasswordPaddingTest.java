@@ -103,16 +103,13 @@ public class FIPS1402Pbkdf2PasswordPaddingTest {
         PasswordHashProvider pbkdf2HashProvider = factory.create(null);
 
         PasswordCredentialModel passwordCred = pbkdf2HashProvider.encodedCredential(password, ITERATIONS);
-        //logger.infof("After password credential created. BC FIPS approved mode: %b, password: %s", CryptoServicesRegistrar.isInApprovedOnlyMode(), password);
-        //TODO replace isInApprovedOnlyMode with working alternative
+        logger.infof("After password credential created. BC FIPS approved mode: %b, password: %s", CryptoServicesRegistrar.isInApprovedOnlyMode(), password);
 
         if (shouldEnableApprovedModeForVerification) {
-            //CryptoServicesRegistrar.setApprovedOnlyMode(true);
-            //TODO replace setApprovedOnlyMode with working alternative
+            CryptoServicesRegistrar.setApprovedOnlyMode(true);
         }
 
-        //logger.infof("Before password verification. BC FIPS approved mode: %b, password: %s", CryptoServicesRegistrar.isInApprovedOnlyMode(), password);
-        //TODO replace isInApprovedOnlyMode with working alternative
+        logger.infof("Before password verification. BC FIPS approved mode: %b, password: %s", CryptoServicesRegistrar.isInApprovedOnlyMode(), password);
         assertThat(true, is(pbkdf2HashProvider.verify(password, passwordCred)));
     }
 
