@@ -24,11 +24,10 @@ import org.keycloak.broker.provider.AuthenticationRequest;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.ExchangeTokenToIdentityProviderToken;
 import org.keycloak.broker.provider.IdentityBrokerException;
-import org.keycloak.broker.provider.IdentityProvider;
+import org.keycloak.broker.provider.UserAuthenticationIdentityProvider;
 import org.keycloak.broker.provider.util.IdentityBrokerState;
 import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.common.ClientConnection;
-import org.keycloak.common.util.Base64;
 import org.keycloak.events.Details;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
@@ -60,7 +59,12 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -90,6 +94,21 @@ public class TwitterIdentityProvider extends AbstractIdentityProvider<OAuth2Iden
         return new Endpoint(session, callback, event, this);
     }
 
+    private static String base64EncodeRequestToken(RequestToken requestToken) throws IOException {
+      try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
+              ObjectOutputStream oos = new ObjectOutputStream(Base64.getEncoder().wrap(baos))) {
+          oos.writeObject(requestToken);
+          oos.close();
+          return baos.toString(StandardCharsets.US_ASCII);
+      }
+    }
+
+    protected static RequestToken base64DecodeRequestToken(String serialized) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(serialized)))) {
+            return (RequestToken) in.readObject();
+        }
+    }
+
     @Override
     public Response performLogin(AuthenticationRequest request) {
         try {
@@ -97,7 +116,7 @@ public class TwitterIdentityProvider extends AbstractIdentityProvider<OAuth2Iden
             RequestToken requestToken = oAuthAuthorization.getOAuthRequestToken(uri.toString());
             AuthenticationSessionModel authSession = request.getAuthenticationSession();
 
-            authSession.setAuthNote(TWITTER_TOKEN, Base64.encodeObject(requestToken));
+            authSession.setAuthNote(TWITTER_TOKEN, base64EncodeRequestToken(requestToken));
 
             URI authenticationUrl = URI.create(requestToken.getAuthenticationURL());
 
@@ -147,7 +166,7 @@ public class TwitterIdentityProvider extends AbstractIdentityProvider<OAuth2Iden
     }
 
     protected Response exchangeSessionToken(UriInfo uriInfo, ClientModel authorizedClient, UserSessionModel tokenUserSession, UserModel tokenSubject) {
-        String accessToken = tokenUserSession.getNote(IdentityProvider.FEDERATED_ACCESS_TOKEN);
+        String accessToken = tokenUserSession.getNote(UserAuthenticationIdentityProvider.FEDERATED_ACCESS_TOKEN);
         if (accessToken == null) {
             return exchangeTokenExpired(uriInfo, authorizedClient, tokenUserSession, tokenSubject);
         }
@@ -209,10 +228,7 @@ public class TwitterIdentityProvider extends AbstractIdentityProvider<OAuth2Iden
 
             try (VaultStringSecret vaultStringSecret = session.vault().getStringSecret(providerConfig.getClientSecret())) {
                 String twitterToken = authSession.getAuthNote(TWITTER_TOKEN);
-                RequestToken requestToken;
-                try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(Base64.decode(twitterToken)))) {
-                    requestToken = (RequestToken) in.readObject();
-                }
+                RequestToken requestToken = base64DecodeRequestToken(twitterToken);
 
                 AccessToken oAuthAccessToken = provider.oAuthAuthorization.getOAuthAccessToken(requestToken, verifier);
 
@@ -242,7 +258,7 @@ public class TwitterIdentityProvider extends AbstractIdentityProvider<OAuth2Iden
                 if (providerConfig.isStoreToken()) {
                     identity.setToken(token);
                 }
-                identity.getContextData().put(IdentityProvider.FEDERATED_ACCESS_TOKEN, token);
+                identity.getContextData().put(UserAuthenticationIdentityProvider.FEDERATED_ACCESS_TOKEN, token);
 
                 identity.setAuthenticationSession(authSession);
 
@@ -271,7 +287,7 @@ public class TwitterIdentityProvider extends AbstractIdentityProvider<OAuth2Iden
 
     @Override
     public void authenticationFinished(AuthenticationSessionModel authSession, BrokeredIdentityContext context) {
-        authSession.setUserSessionNote(IdentityProvider.FEDERATED_ACCESS_TOKEN, (String)context.getContextData().get(IdentityProvider.FEDERATED_ACCESS_TOKEN));
+        authSession.setUserSessionNote(UserAuthenticationIdentityProvider.FEDERATED_ACCESS_TOKEN, (String) context.getContextData().get(UserAuthenticationIdentityProvider.FEDERATED_ACCESS_TOKEN));
 
     }
 

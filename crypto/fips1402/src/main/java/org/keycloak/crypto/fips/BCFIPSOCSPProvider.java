@@ -20,7 +20,6 @@ package org.keycloak.crypto.fips;
 
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.ASN1String;
 import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.ocsp.OCSPObjectIdentifiers;
@@ -437,7 +436,7 @@ public class BCFIPSOCSPProvider extends OCSPProvider {
                     if (ad.getAccessMethod().equals(AccessDescription.id_ad_ocsp)) {
                         // See https://www.ietf.org/rfc/rfc2560.txt, 3.1 Certificate Content
                         if (ad.getAccessLocation().getTagNo() == GeneralName.uniformResourceIdentifier) {
-                            DERIA5String value = (DERIA5String) DERIA5String.getInstance(ad.getAccessLocation().getName());
+                            DERIA5String value = DERIA5String.getInstance(ad.getAccessLocation().getName());
                             responderURIs.add(value.getString());
                         }
                     }

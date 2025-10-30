@@ -205,17 +205,17 @@ public class BCCertificateUtilsProvider implements CertificateUtilsProvider {
                     break;
                 }
                 case JavaAlgorithm.Ed25519:
-                case JavaAlgorithm.Ed448:
-                    signerBuilder = new JcaContentSignerBuilder(privateKey.getAlgorithm())
-                            .setProvider(BouncyIntegration.PROVIDER);
-                    break;
-                case JavaAlgorithm.MLDSA44:
-                case JavaAlgorithm.MLDSA65:
-                case JavaAlgorithm.MLDSA87:{
+                case JavaAlgorithm.Ed448: {
                     signerBuilder = new JcaContentSignerBuilder(privateKey.getAlgorithm())
                             .setProvider(BouncyIntegration.PROVIDER);
                     break;
                 }
+                case JavaAlgorithm.MLDSA44:
+                case JavaAlgorithm.MLDSA65:
+                case JavaAlgorithm.MLDSA87:
+                    signerBuilder = new JcaContentSignerBuilder(privateKey.getAlgorithm())
+                            .setProvider(BouncyIntegration.PROVIDER);
+                    break;
                 default: {
                     throw new RuntimeException(String.format("Keytype %s is not supported.", privateKey.getAlgorithm()));
                 }

@@ -634,7 +634,7 @@ public class RequiredActionUpdateEmailTestWithVerificationTest extends AbstractR
         updateEmailPage.changeEmail("new@localhost");
 
         events.expect(EventType.SEND_VERIFY_EMAIL).detail(Details.EMAIL, "new@localhost").assertEvent();
-
+        
         // Verify EMAIL_PENDING attribute is set
         UserRepresentation user = ActionUtil.findUserWithAdminClient(adminClient, "test-user@localhost");
         Map<String, List<String>> attributes = user.getAttributes();
@@ -643,7 +643,7 @@ public class RequiredActionUpdateEmailTestWithVerificationTest extends AbstractR
 
         String confirmationLink = fetchEmailConfirmationLink("new@localhost");
         assertNotNull("Should have received verification email", confirmationLink);
-
+        
         // Admin sets EMAIL_PENDING to empty string (simulating admin UI removal)
         user.singleAttribute(UserModel.EMAIL_PENDING, "");
         testRealm().users().get(user.getId()).update(user);

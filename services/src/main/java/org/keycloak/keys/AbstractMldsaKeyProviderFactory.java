@@ -16,8 +16,6 @@
  */
 package org.keycloak.keys;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.keycloak.common.crypto.CryptoConstants;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.component.ComponentValidationException;
 import org.keycloak.crypto.Algorithm;
@@ -30,7 +28,6 @@ import org.keycloak.provider.ProviderConfigurationBuilder;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.Security;
 
 import static org.keycloak.provider.ProviderConfigProperty.LIST_TYPE;
 
@@ -62,8 +59,7 @@ public abstract class AbstractMldsaKeyProviderFactory implements KeyProviderFact
             throw new IllegalArgumentException(algorithm + " is not supported");
         }
         try {
-            if (Security.getProvider(CryptoConstants.BC_PROVIDER_ID) == null) Security.addProvider(new BouncyCastleProvider());
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm, CryptoConstants.BC_PROVIDER_ID);
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm);
             return keyGen.generateKeyPair();
         } catch (Exception e) {
             throw new RuntimeException(e);

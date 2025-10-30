@@ -56,19 +56,18 @@ public class MissingUseJwksRestResource {
                     List<X509Certificate> certificates = Optional.ofNullable(k.getCertificateChain())
                         .filter(certs -> !certs.isEmpty())
                         .orElseGet(() -> Collections.singletonList(k.getCertificate()));
-                    switch (k.getType()) {
-                        case KeyType.RSA:
-                            JWK rsaKey = b.rsa(k.getPublicKey(), certificates, k.getUse());
-                            rsaKey.setPublicKeyUse(null);
-                            return rsaKey;
-                        case KeyType.EC:
-                            JWK ecKey = b.ec(k.getPublicKey(), k.getUse());
-                            ecKey.setPublicKeyUse(null);
-                            return ecKey;
-                        case KeyType.OKP:
-                            return b.okp(k.getPublicKey(), k.getUse());
-                        case KeyType.AKP:
-                            return b.akp(k.getPublicKey(), k.getUse());
+                    if (k.getType().equals(KeyType.RSA)) {
+                        JWK rsaKey = b.rsa(k.getPublicKey(), certificates, k.getUse());
+                        rsaKey.setPublicKeyUse(null);
+                        return rsaKey;
+                    } else if (k.getType().equals(KeyType.EC)) {
+                        JWK ecKey = b.ec(k.getPublicKey(), k.getUse());
+                        ecKey.setPublicKeyUse(null);
+                        return ecKey;
+                    } else if (k.getType().equals(KeyType.OKP)) {
+                        return b.okp(k.getPublicKey(), k.getUse());
+                    } else if (k.getType().equals(KeyType.AKP)) {
+                        return b.akp(k.getPublicKey(), k.getUse());
                     }
                     return null;
                 })

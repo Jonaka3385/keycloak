@@ -100,18 +100,27 @@ public class JavaAlgorithm {
     public static String getJavaAlgorithmForHash(String algorithm, String curve) {
         switch (algorithm) {
             case Algorithm.RS256:
-            case Algorithm.HS256:
-            case Algorithm.ES256:
-            case Algorithm.PS256:
                 return SHA256;
             case Algorithm.RS384:
-            case Algorithm.HS384:
-            case Algorithm.ES384:
-            case Algorithm.PS384:
                 return SHA384;
             case Algorithm.RS512:
+                return SHA512;
+            case Algorithm.HS256:
+                return SHA256;
+            case Algorithm.HS384:
+                return SHA384;
             case Algorithm.HS512:
+                return SHA512;
+            case Algorithm.ES256:
+                return SHA256;
+            case Algorithm.ES384:
+                return SHA384;
             case Algorithm.ES512:
+                return SHA512;
+            case Algorithm.PS256:
+                return SHA256;
+            case Algorithm.PS384:
+                return SHA384;
             case Algorithm.PS512:
                 return SHA512;
             case Algorithm.EdDSA:

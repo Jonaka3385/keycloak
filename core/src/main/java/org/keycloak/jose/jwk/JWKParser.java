@@ -21,7 +21,6 @@ import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
@@ -29,8 +28,6 @@ import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.keycloak.common.crypto.CryptoConstants;
 import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.crypto.KeyType;
@@ -166,8 +163,7 @@ public class JWKParser {
 
             KeyFactory keyFactory;
             try {
-                if (Security.getProvider(CryptoConstants.BC_PROVIDER_ID) == null) Security.addProvider(new BouncyCastleProvider());
-                keyFactory = KeyFactory.getInstance(alg, CryptoConstants.BC_PROVIDER_ID);
+                keyFactory = KeyFactory.getInstance(alg);
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException("Failed to create AKP public key from JWK", e);
             }

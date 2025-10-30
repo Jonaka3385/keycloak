@@ -1,5 +1,6 @@
 <#import "/templates/guide.adoc" as tmpl>
 <#import "/templates/links.adoc" as links>
+<#import "/templates/features.adoc" as features>
 
 <@tmpl.guide
 title="Configuring and using token exchange"
@@ -52,6 +53,9 @@ Any of these situations could be the reason to invoke the token exchange. The `r
 _subject token_ and exchange it for another token _requested token_.
 . The _requested token_ is returned to `requester-client`. This token can now be sent to the `target-client`.
 . The `target-client` can fulfill the request and return the response to the `requester-client`. The `requester-client` can then follow and return the response to the request from step 2.
+
+.Token Exchange Example Flow
+image::token-exchange-example-flow.dio.svg[Token Exchange Example Flow]
 
 Many other use-cases exist for token exchange, but the preceding example is the most typical.
 
@@ -327,22 +331,7 @@ s|Subject impersonation (including direct naked impersonation)   | Not implement
 [[_legacy-token-exchange]]
 == Legacy token exchange
 
-:tech_feature_name: Token Exchange
-:tech_feature_id: token-exchange
-
-[NOTE]
-====
-{tech_feature_name} is
-*Preview*
-and is not fully supported. This feature is disabled by default.
-
-To enable start the server with `--features=preview`
-ifdef::tech_feature_id[]
-or `--features={tech_feature_id}`
-endif::[]
-
-{tech_feature_name} is *Technology Preview* and is not fully supported.
-====
+<@features.techpreview feature="token-exchange"/>
 
 [NOTE]
 ====

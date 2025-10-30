@@ -63,6 +63,9 @@ public class DefaultCryptoProvider implements CryptoProvider {
         providers.put(CryptoConstants.ECDH_ES_A128KW, new BCEcdhEsAlgorithmProvider());
         providers.put(CryptoConstants.ECDH_ES_A192KW, new BCEcdhEsAlgorithmProvider());
         providers.put(CryptoConstants.ECDH_ES_A256KW, new BCEcdhEsAlgorithmProvider());
+        providers.put(CryptoConstants.MLDSA44, new BouncyCastlePQCProvider());
+        providers.put(CryptoConstants.MLDSA65, new BouncyCastlePQCProvider());
+        providers.put(CryptoConstants.MLDSA87, new BouncyCastlePQCProvider());
 
         if (existingBc == null) {
             Security.addProvider(this.bcProvider);
@@ -71,6 +74,7 @@ public class DefaultCryptoProvider implements CryptoProvider {
             log.debugv("Security provider {0} already loaded", this.bcProvider.getClass().getName());
         }
     }
+
 
     @Override
     public Provider getBouncyCastleProvider() {
@@ -117,20 +121,24 @@ public class DefaultCryptoProvider implements CryptoProvider {
         return new BCECDSACryptoProvider();
     }
 
+
     @Override
     public <T> T getOCSPProver(Class<T> clazz) {
         return clazz.cast(new BCOCSPProvider());
     }
+
 
     @Override
     public KeyPairGenerator getKeyPairGen(String algorithm) throws NoSuchAlgorithmException, NoSuchProviderException {
         return KeyPairGenerator.getInstance(algorithm, BouncyIntegration.PROVIDER);
     }
 
+
     @Override
     public KeyFactory getKeyFactory(String algorithm) throws NoSuchAlgorithmException, NoSuchProviderException {
         return KeyFactory.getInstance(algorithm, BouncyIntegration.PROVIDER);
     }
+
 
     @Override
     public Cipher getAesCbcCipher() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException {
@@ -167,6 +175,7 @@ public class DefaultCryptoProvider implements CryptoProvider {
         return CertStore.getInstance("Collection", certStoreParams, BouncyIntegration.PROVIDER);
 
     }
+
 
     @Override
     public CertPathBuilder getCertPathBuilder() throws NoSuchAlgorithmException, NoSuchProviderException {

@@ -16,15 +16,12 @@
  */
 package org.keycloak.crypto;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.keycloak.common.VerificationException;
-import org.keycloak.common.crypto.CryptoConstants;
 import org.keycloak.common.crypto.CryptoIntegration;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.Signature;
 
 public class AsymmetricSignatureVerifierContext implements SignatureVerifierContext {
@@ -53,18 +50,14 @@ public class AsymmetricSignatureVerifierContext implements SignatureVerifierCont
             verifier.update(data);
             return verifier.verify(signature);
         } catch (Exception e) {
-            throw new VerificationException("Verification failed", e);
+            throw new VerificationException("Signing failed", e);
         }
     }
 
-    private Signature getSignature() throws NoSuchAlgorithmException, NoSuchProviderException {
+    private Signature getSignature()
+            throws NoSuchAlgorithmException, NoSuchProviderException {
         try {
-            if (JavaAlgorithm.isMldsaJavaAlgorithm(key.getAlgorithm())) {
-                if (Security.getProvider(CryptoConstants.BC_PROVIDER_ID) == null) Security.addProvider(new BouncyCastleProvider());
-                return Signature.getInstance(key.getAlgorithm(), CryptoConstants.BC_PROVIDER_ID);
-            } else {
-                return Signature.getInstance(JavaAlgorithm.getJavaAlgorithm(key.getAlgorithmOrDefault(), key.getCurve()));
-            }
+            return Signature.getInstance(JavaAlgorithm.getJavaAlgorithm(key.getAlgorithmOrDefault(), key.getCurve()));
         } catch (NoSuchAlgorithmException e) {
             // Retry using the current crypto provider's override implementation
             return CryptoIntegration.getProvider().getSignature(key.getAlgorithmOrDefault());

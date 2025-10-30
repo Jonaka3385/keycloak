@@ -34,8 +34,7 @@ public class FIPS1402SecureRandomTest {
     public void testSecureRandom() throws Exception {
         logger.info(CryptoIntegration.dumpJavaSecurityProviders());
 
-        //logger.infof("BC FIPS approved mode: %b, FIPS Status: %s", CryptoServicesRegistrar.isInApprovedOnlyMode(), FipsStatus.getStatusMessage());
-        //TODO replace isInApprovedOnlyMode with working alternative
+        logger.infof("BC FIPS approved mode: %b, FIPS Status: %s", CryptoServicesRegistrar.isInApprovedOnlyMode(), FipsStatus.getStatusMessage());
 
         SecureRandom sc1 = new SecureRandom();
         logger.infof(dumpSecureRandom("new SecureRandom()", sc1));

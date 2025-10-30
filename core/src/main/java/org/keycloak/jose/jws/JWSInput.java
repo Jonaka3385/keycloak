@@ -38,6 +38,7 @@ public class JWSInput implements JOSE {
     byte[] content;
     byte[] signature;
 
+
     public JWSInput(String wire) throws JWSInputException {
         try {
             this.wireString = wire;
@@ -74,7 +75,6 @@ public class JWSInput implements JOSE {
     public String getEncodedSignature() {
         return encodedSignature;
     }
-
     public String getEncodedSignatureInput() {
         return encodedSignatureInput;
     }

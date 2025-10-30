@@ -17,7 +17,6 @@
 
 package org.keycloak.testsuite.rest.resource;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jboss.resteasy.reactive.NoCache;
 
 import javax.crypto.SecretKey;
@@ -27,8 +26,6 @@ import jakarta.ws.rs.Consumes;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
-import org.keycloak.common.crypto.CryptoConstants;
-import org.keycloak.common.util.Base64;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.common.util.PemUtils;
@@ -84,12 +81,11 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.security.spec.ECGenParameterSpec;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,10 +124,10 @@ public class TestingOIDCEndpointsApplicationResource {
                                             @QueryParam("keepExistingKeys") Boolean keepExistingKeys,
                                             @QueryParam("kid") String kid) {
         try {
-            KeyPair keyPair;
+            KeyPair keyPair = null;
             KeyUse keyUse = KeyUse.SIG;
             if (jwaAlgorithm == null) jwaAlgorithm = Algorithm.RS256;
-            String keyType;
+            String keyType = null;
 
             switch (jwaAlgorithm) {
                 case Algorithm.RS256:
@@ -213,12 +209,11 @@ public class TestingOIDCEndpointsApplicationResource {
         return keyPair;
     }
 
-    private KeyPair generateMldsaKey(String algorithm) throws NoSuchAlgorithmException {
+    private KeyPair generateMldsaKey(String algorithm) {
         KeyPairGenerator keyGen;
-        if (Security.getProvider(CryptoConstants.BC_PROVIDER_ID) == null) Security.addProvider(new BouncyCastleProvider());
         try {
-            keyGen = KeyPairGenerator.getInstance(algorithm, CryptoConstants.BC_PROVIDER_ID);
-        } catch (NoSuchProviderException e) {
+            keyGen = KeyPairGenerator.getInstance(algorithm);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return keyGen.generateKeyPair();
@@ -244,8 +239,8 @@ public class TestingOIDCEndpointsApplicationResource {
     public Map<String, String> getKeysAsBase64() {
         // It seems that PemUtils.decodePrivateKey, decodePublicKey can only treat RSA type keys, not EC type keys. Therefore, these are not used.
         TestApplicationResourceProviderFactory.OIDCKeyData keyData = clientData.getFirstKey();
-        String privateKeyPem = Base64.encodeBytes(keyData.getSigningKeyPair().getPrivate().getEncoded());
-        String publicKeyPem = Base64.encodeBytes(keyData.getSigningKeyPair().getPublic().getEncoded());
+        String privateKeyPem = Base64.getEncoder().encodeToString(keyData.getSigningKeyPair().getPrivate().getEncoded());
+        String publicKeyPem = Base64.getEncoder().encodeToString(keyData.getSigningKeyPair().getPublic().getEncoded());
 
         Map<String, String> res = new HashMap<>();
         res.put(PRIVATE_KEY, privateKeyPem);
