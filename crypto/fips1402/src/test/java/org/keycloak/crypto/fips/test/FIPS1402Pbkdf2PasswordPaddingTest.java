@@ -44,17 +44,14 @@ public class FIPS1402Pbkdf2PasswordPaddingTest {
 
     @BeforeClass
     public static void checkBcFipsApproved() {
-        //defaultBcFipsApprovedMode = CryptoServicesRegistrar.isInApprovedOnlyMode();
-        defaultBcFipsApprovedMode = true;
-        //TODO replace isInApprovedOnlyMode with working alternative
+        defaultBcFipsApprovedMode = CryptoServicesRegistrar.isInApprovedOnlyMode();
     }
 
     @Before
     public void before() {
         // Run this test just if java is in FIPS mode
         Assume.assumeTrue("Java is not in FIPS mode. Skipping the test.", Environment.isJavaInFipsMode());
-        //Assert.assertEquals(defaultBcFipsApprovedMode, CryptoServicesRegistrar.isInApprovedOnlyMode());
-        //TODO replace isInApprovedOnlyMode with working alternative
+        Assert.assertEquals(defaultBcFipsApprovedMode, CryptoServicesRegistrar.isInApprovedOnlyMode());
     }
 
     @Test

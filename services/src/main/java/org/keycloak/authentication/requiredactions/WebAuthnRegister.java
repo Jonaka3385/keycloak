@@ -483,4 +483,5 @@ public class WebAuthnRegister implements RequiredActionProvider, CredentialRegis
         MediaType mediaType = request.getHttpHeaders().getMediaType();
         return mediaType != null && mediaType.isCompatible(MediaType.APPLICATION_FORM_URLENCODED_TYPE);
     }
+
 }

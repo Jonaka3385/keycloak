@@ -164,7 +164,7 @@ public class BCFIPSUserIdentityExtractorProvider  extends UserIdentityExtractorP
                                         tempOid = oid.getId();
 
                                         ASN1Encodable principalNameEncoded = asn1Sequence.getObjectAt(1);
-                                        DERUTF8String principalName = (DERUTF8String) DERUTF8String.getInstance(unwrap(principalNameEncoded));
+                                        DERUTF8String principalName = DERUTF8String.getInstance(unwrap(principalNameEncoded));
 
                                         tempOtherName = principalName.getString();
 

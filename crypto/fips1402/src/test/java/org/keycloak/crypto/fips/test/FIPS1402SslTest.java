@@ -53,8 +53,7 @@ public class FIPS1402SslTest {
     @Test
     public void testPkcs12KeyStoreWithPKIXKeyMgrFactory() throws Exception {
         // PKCS12 keystore works just in non-approved mode
-        //Assume.assumeFalse(CryptoServicesRegistrar.isInApprovedOnlyMode());
-        //TODO replace isInApprovedOnlyMode with working alternative
+        Assume.assumeFalse(CryptoServicesRegistrar.isInApprovedOnlyMode());
         String type = "PKCS12";
         String password = "passwordpassword";
 
@@ -69,8 +68,7 @@ public class FIPS1402SslTest {
     @Ignore("Skip for now and keep it just for the reference. We can check if we want to test this path with SunX509 algorithm withadditional security provider")
     public void testPkcs12KeyStoreWithSunX509KeyMgrFactory() throws Exception {
         // PKCS12 keystore works just in non-approved mode
-        //Assume.assumeFalse(CryptoServicesRegistrar.isInApprovedOnlyMode());
-        //TODO replace isInApprovedOnlyMode with working alternative
+        Assume.assumeFalse(CryptoServicesRegistrar.isInApprovedOnlyMode());
         String type = "PKCS12";
         String password = "passwordpassword";
 

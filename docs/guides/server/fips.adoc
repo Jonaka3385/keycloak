@@ -199,7 +199,6 @@ it detects that corresponding BCFIPS jars are present (see above for the version
 ----
 cp $KEYCLOAK_HOME/providers/bc-fips-*.jar $KEYCLOAK_HOME/bin/client/lib/
 cp $KEYCLOAK_HOME/providers/bctls-fips-*.jar $KEYCLOAK_HOME/bin/client/lib/
-cp $KEYCLOAK_HOME/providers/bcpkix-fips-*.jar $KEYCLOAK_HOME/bin/client/lib/
 cp $KEYCLOAK_HOME/providers/bcutil-fips-*.jar $KEYCLOAK_HOME/bin/client/lib/
 ----
 
