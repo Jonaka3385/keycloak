@@ -24,6 +24,7 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -175,14 +176,15 @@ public class JWKBuilder {
     }
 
     public JWK akp(Key key, KeyUse keyUse) {
-        String pubStr = key.toString();
         AKPPublicJWK k = new AKPPublicJWK();
+        byte[] encodedKey = key.getEncoded();
+        String keyString = Base64.getEncoder().encodeToString(encodedKey);
 
         k.setKeyId(kid);
         k.setKeyType(KeyType.AKP);
         k.setAlgorithm(algorithm);
         k.setPublicKeyUse(keyUse == null ? DEFAULT_PUBLIC_KEY_USE.getSpecName() : keyUse.getSpecName());
-        k.setPub(pubStr);
+        k.setPub(keyString);
 
         return k;
     }
