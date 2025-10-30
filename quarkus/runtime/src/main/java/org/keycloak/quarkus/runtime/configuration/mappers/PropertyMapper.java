@@ -31,15 +31,20 @@ import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import org.keycloak.common.Profile;
 import org.keycloak.config.DeprecatedMetadata;
 import org.keycloak.config.Option;
+import org.keycloak.config.OptionBuilder;
 import org.keycloak.config.OptionCategory;
 import org.keycloak.quarkus.runtime.cli.PropertyException;
 import org.keycloak.quarkus.runtime.cli.ShortErrorMessageHandler;
 import org.keycloak.quarkus.runtime.cli.command.AbstractCommand;
 import org.keycloak.quarkus.runtime.configuration.ConfigArgsConfigSource;
+import org.keycloak.quarkus.runtime.configuration.Configuration;
 import org.keycloak.quarkus.runtime.configuration.KcEnvConfigSource;
 import org.keycloak.quarkus.runtime.configuration.KeycloakConfigSourceProvider;
 import org.keycloak.quarkus.runtime.configuration.NestedPropertyMappingInterceptor;
@@ -547,6 +552,22 @@ public class PropertyMapper<T> {
         return new PropertyMapper.Builder<>(opt);
     }
 
+    /**
+     * Create a property mapper from a feature.
+     * The mapper maps to external properties the state of the feature.
+     * <p>
+     * If the feature is enabled, it returns {@code true}. Otherwise {@code null}.
+     */
+    public static PropertyMapper.Builder<Boolean> fromFeature(Profile.Feature feature) {
+        final var option = new OptionBuilder<>(feature.getKey() + "-hidden-mapper", Boolean.class)
+                .buildTime(true)
+                .hidden()
+                .build();
+        return new Builder<>(option)
+                .isEnabled(() -> Profile.isFeatureEnabled(feature))
+                .transformer((v, ctx) -> Boolean.TRUE.toString()); // we know the feature is enabled due to .isEnabled()
+    }
+
     public void validate(ConfigValue value) {
         if (validator != null) {
             validator.accept(this, value);
@@ -577,6 +598,24 @@ public class PropertyMapper<T> {
                 continue;
             }
             try {
+                if (option.getComponentType() != String.class && option.getExpectedValues().isEmpty()) {
+                    if (v.isEmpty()) {
+                        throw new PropertyException("Invalid empty value for option %s".formatted(getOptionAndSourceMessage(configValue)));
+                    }
+                    try {
+                        Configuration.getConfig().convert(v, option.getComponentType());
+                    } catch (Exception e) {
+                        // strip the smallrye code if possible
+                        String message = e.getMessage();
+                        Pattern p = Pattern.compile("SRCFG\\d+: (.*)$");
+                        Matcher m = p.matcher(message);
+                        if (m.find()) {
+                            message = m.group(1);
+                        }
+                        throw new PropertyException("Invalid value for option %s: %s".formatted(getOptionAndSourceMessage(configValue), message));
+                    }
+                }
+
                 singleValidator.accept(configValue, v);
             } catch (PropertyException e) {
                 if (!result.isEmpty()) {
