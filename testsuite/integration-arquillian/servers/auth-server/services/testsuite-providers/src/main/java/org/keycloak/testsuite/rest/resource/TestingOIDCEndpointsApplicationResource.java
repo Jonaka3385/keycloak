@@ -209,13 +209,8 @@ public class TestingOIDCEndpointsApplicationResource {
         return keyPair;
     }
 
-    private KeyPair generateMldsaKey(String algorithm) {
-        KeyPairGenerator keyGen;
-        try {
-            keyGen = KeyPairGenerator.getInstance(algorithm);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private KeyPair generateMldsaKey(String algorithm) throws NoSuchAlgorithmException {
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm);
         return keyGen.generateKeyPair();
     }
 
