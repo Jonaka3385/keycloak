@@ -234,8 +234,8 @@ public class TestingOIDCEndpointsApplicationResource {
     public Map<String, String> getKeysAsBase64() {
         // It seems that PemUtils.decodePrivateKey, decodePublicKey can only treat RSA type keys, not EC type keys. Therefore, these are not used.
         TestApplicationResourceProviderFactory.OIDCKeyData keyData = clientData.getFirstKey();
-        String privateKeyPem = Base64.encodeBytes(keyData.getSigningKeyPair().getPrivate().getEncoded());
-        String publicKeyPem = Base64.encodeBytes(keyData.getSigningKeyPair().getPublic().getEncoded());
+        String privateKeyPem = Base64Url.encode(keyData.getSigningKeyPair().getPrivate().getEncoded());
+        String publicKeyPem = Base64Url.encode(keyData.getSigningKeyPair().getPublic().getEncoded());
 
         Map<String, String> res = new HashMap<>();
         res.put(PRIVATE_KEY, privateKeyPem);

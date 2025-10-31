@@ -25,7 +25,6 @@ import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.keycloak.common.crypto.CryptoIntegration;
@@ -156,7 +155,7 @@ public class JWKParser {
             throw new IllegalArgumentException("Missing 'pub' parameter in AKP-JWK");
         }
 
-        byte[] decodedKey = Base64.getDecoder().decode(pub);
+        byte[] decodedKey = Base64Url.decode(pub);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decodedKey);
         try {
             KeyFactory keyFactory = KeyFactory.getInstance(alg);
