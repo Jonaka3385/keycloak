@@ -119,14 +119,14 @@ public class ServerJWKTest {
         JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(keyPair.getPublic())).algorithm(Algorithm.MLDSA65).akp(publicKey);
 
         assertEquals("AKP", jwk.getKeyType());
-        assertEquals("Dilithium3", jwk.getAlgorithm());
+        assertEquals("Dilithium3", jwk.getAlgorithm()); //TODO change Dilithium3 to ML-DSA-65 when BCProvider implemented
         assertEquals("sig", jwk.getPublicKeyUse());
 
         assertTrue(jwk instanceof AKPPublicJWK);
 
         AKPPublicJWK akpJwk = (AKPPublicJWK) jwk;
 
-        assertEquals("Dilithium3", akpJwk.getAlgorithm());
+        assertEquals("Dilithium3", akpJwk.getAlgorithm()); //TODO change Dilithium3 to ML-DSA-65 when BCProvider implemented
         assertNotNull(akpJwk.getPub());
 
         String jwkJson = JsonSerialization.writeValueAsString(jwk);
