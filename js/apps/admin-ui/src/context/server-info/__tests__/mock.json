@@ -533,13 +533,7 @@
         "ES512": { "order": 0 },
         "PS256": { "order": 0 },
         "PS512": { "order": 0 },
-        "RS512": { "order": 0 },
-        "ML-DSA-44": { "order": 0 },
-        "ML-DSA-65": { "order": 0 },
-        "ML-DSA-87": { "order": 0 },
-        "Dilithium2": { "order": 0 },
-        "Dilithium3": { "order": 0 },
-        "Dilithium5": { "order": 0 }
+        "RS512": { "order": 0 }
       }
     },
     "clientValidation": {
