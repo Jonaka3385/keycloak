@@ -188,7 +188,7 @@ public abstract class JWKTest {
         PublicKey publicKey = keyPair.getPublic();
         List<X509Certificate> certificates = Arrays.asList(generateV1SelfSignedCertificate(keyPair, "Test"), generateV1SelfSignedCertificate(keyPair, "Intermediate"));
 
-        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(publicKey)).algorithm("Dilithium3").akp(publicKey, KeyUse.valueOf("sig"));
+        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(publicKey)).algorithm("Dilithium3").akp(publicKey, KeyUse.SIG, certificates);
 
         assertNotNull(jwk.getKeyId());
         assertEquals("AKP", jwk.getKeyType());
@@ -197,18 +197,18 @@ public abstract class JWKTest {
 
         assertTrue(jwk instanceof AKPPublicJWK);
         assertNotNull(((AKPPublicJWK) jwk).getPub());
-        assertNotNull(((AKPPublicJWK) jwk).getX509CertificateChain());
+        assertNotNull(jwk.getX509CertificateChain());
 
         String[] expectedChain = new String[certificates.size()];
         for (int i = 0; i < certificates.size(); i++) {
             expectedChain[i] = PemUtils.encodeCertificate(certificates.get(i));
         }
 
-        assertArrayEquals(expectedChain, ((AKPPublicJWK) jwk).getX509CertificateChain());
-        assertNotNull(((AKPPublicJWK) jwk).getSha1x509Thumbprint());
-        assertEquals(PemUtils.generateThumbprint(((AKPPublicJWK) jwk).getX509CertificateChain(), "SHA-1"), ((AKPPublicJWK) jwk).getSha1x509Thumbprint());
-        assertNotNull(((AKPPublicJWK) jwk).getSha256x509Thumbprint());
-        assertEquals(PemUtils.generateThumbprint(((AKPPublicJWK) jwk).getX509CertificateChain(), "SHA-256"), ((AKPPublicJWK) jwk).getSha256x509Thumbprint());
+        assertArrayEquals(expectedChain, jwk.getX509CertificateChain());
+        assertNotNull(jwk.getSha1x509Thumbprint());
+        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-1"), jwk.getSha1x509Thumbprint());
+        assertNotNull(jwk.getSha256x509Thumbprint());
+        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-256"), jwk.getSha256x509Thumbprint());
 
         String jwkJson = JsonSerialization.writeValueAsString(jwk);
 
