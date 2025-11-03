@@ -187,15 +187,8 @@ public abstract class JWKTest {
         KeyPair keyPair = CryptoIntegration.getProvider().getKeyPairGen(Algorithm.MLDSA65).generateKeyPair();
         PublicKey publicKey = keyPair.getPublic();
         List<X509Certificate> certificates = Arrays.asList(generateV1SelfSignedCertificate(keyPair, "Test"), generateV1SelfSignedCertificate(keyPair, "Intermediate"));
-        assertNotNull(certificates);
 
-        String[] expectedChain = new String[certificates.size()];
-        for (int i = 0; i < certificates.size(); i++) {
-            expectedChain[i] = PemUtils.encodeCertificate(certificates.get(i));
-        }
-
-        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(publicKey)).algorithm("ML-DSA-65").akp(publicKey, KeyUse.SIG);
-        jwk.setX509CertificateChain(expectedChain);
+        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(publicKey)).algorithm("ML-DSA-65").akp(publicKey, KeyUse.SIG, certificates);
 
         assertNotNull(jwk.getKeyId());
         assertEquals("AKP", jwk.getKeyType());
@@ -205,6 +198,11 @@ public abstract class JWKTest {
         assertTrue(jwk instanceof AKPPublicJWK);
         assertNotNull(((AKPPublicJWK) jwk).getPub());
         assertNotNull(jwk.getX509CertificateChain());
+
+        String[] expectedChain = new String[certificates.size()];
+        for (int i = 0; i < certificates.size(); i++) {
+            expectedChain[i] = PemUtils.encodeCertificate(certificates.get(i));
+        }
 
         assertArrayEquals(expectedChain, jwk.getX509CertificateChain());
         assertNotNull(jwk.getSha1x509Thumbprint());
