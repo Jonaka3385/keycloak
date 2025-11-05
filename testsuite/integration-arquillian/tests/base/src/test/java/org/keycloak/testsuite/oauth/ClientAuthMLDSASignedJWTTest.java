@@ -23,27 +23,27 @@ import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.testsuite.util.KeyUtils;
 
 public class ClientAuthMLDSASignedJWTTest extends AbstractClientAuthSignedJWTTest {
-/*
+
     @Test
     public void testCodeToTokenRequestSuccessMLDSA65usingJwksUri() throws Exception {
         testCodeToTokenRequestSuccess(Algorithm.MLDSA65, null, true);
-    }
+    } // HTTP-Error 401
 
     @Test
     public void testCodeToTokenRequestSuccessMLDSA65usingJwks() throws Exception {
         testCodeToTokenRequestSuccess(Algorithm.MLDSA65, null, false);
-    }
+    } // HTTP-Error 401
 
     @Test
     public void testUploadCertificatePemMLDSA65() throws Exception {
         testUploadCertificatePEM(KeyUtils.generateMLDSAKey(Algorithm.MLDSA65), Algorithm.MLDSA65, null);
-    }
+    } // HTTP-Error 500
 
     @Test
     public void testUploadPublicKeyPemMLDSA65() throws Exception {
         testUploadPublicKeyPem(KeyUtils.generateMLDSAKey(Algorithm.MLDSA65), Algorithm.MLDSA65, null);
-    }
-*/// Tests fail! HTTP Error 401 and 500. Can have have multiple Reasons, looking into it again when there's broader ML-DSA support.
+    } // HTTP-Error 500
+
     @Override
     protected String getKeyAlgorithmFromJwaAlgorithm(String jwaAlgorithm, String curve) {
         if (!JavaAlgorithm.isMldsaJavaAlgorithm(jwaAlgorithm)) {
