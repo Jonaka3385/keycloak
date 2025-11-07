@@ -16,10 +16,8 @@
  */
 package org.keycloak.keys;
 
-import org.jboss.logging.Logger;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.component.ComponentModel;
-import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.KeyStatus;
 import org.keycloak.crypto.KeyType;
 import org.keycloak.crypto.KeyUse;
