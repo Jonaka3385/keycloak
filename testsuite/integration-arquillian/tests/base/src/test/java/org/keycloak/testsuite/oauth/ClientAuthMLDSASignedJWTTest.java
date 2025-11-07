@@ -27,12 +27,12 @@ public class ClientAuthMLDSASignedJWTTest extends AbstractClientAuthSignedJWTTes
     @Test
     public void testCodeToTokenRequestSuccessMLDSA65usingJwksUri() throws Exception {
         testCodeToTokenRequestSuccess(Algorithm.MLDSA65, null, true);
-    } // TODO HTTP-Error 400 Bad Request
+    } // TODO HTTP-Error 401
 
     @Test
     public void testCodeToTokenRequestSuccessMLDSA65usingJwks() throws Exception {
         testCodeToTokenRequestSuccess(Algorithm.MLDSA65, null, false);
-    } // TODO HTTP-Error 400 Bad Request
+    } // TODO HTTP-Error 401
 
     @Test
     public void testUploadCertificatePemMLDSA65() throws Exception {
