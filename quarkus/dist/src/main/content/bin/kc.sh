@@ -174,4 +174,4 @@ if [ $status = 10 ]; then
   eval exec "'$JAVA'" "$JAVA_RUN_OPTS"
 else
   exit $status
-fi 
+fi
