@@ -179,7 +179,7 @@ public class JavaAlgorithm {
     }
 
     public static boolean isMldsaJavaAlgorithm(String algorithm) {
-        return getJavaAlgorithm(algorithm).contains("ML-DSA");
+        return getJavaAlgorithm(algorithm).startsWith("ML-DSA-");
     }
 
     public static boolean isHMACJavaAlgorithm(String algorithm) {
