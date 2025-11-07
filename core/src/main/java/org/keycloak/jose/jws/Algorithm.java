@@ -46,9 +46,6 @@ public enum Algorithm {
     MLDSA44(AlgorithmType.MLDSA, null),
     MLDSA65(AlgorithmType.MLDSA, null),
     MLDSA87(AlgorithmType.MLDSA, null),
-    Dilithium2(AlgorithmType.MLDSA, null),
-    Dilithium3(AlgorithmType.MLDSA, null),
-    Dilithium5(AlgorithmType.MLDSA, null),
     ;
 
     private AlgorithmType type;
