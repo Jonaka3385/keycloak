@@ -44,7 +44,6 @@ import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.sessions.RootAuthenticationSessionModel;
 
 import jakarta.ws.rs.core.Response;
-import java.util.List;
 
 public class JWTAuthorizationGrantType extends OAuth2GrantTypeBase {
 
@@ -53,7 +52,6 @@ public class JWTAuthorizationGrantType extends OAuth2GrantTypeBase {
         setContext(context);
 
         String assertion = formParams.getFirst(OAuth2Constants.ASSERTION);
-        String expectedAudience = Urls.realmIssuer(session.getContext().getUri().getBaseUri(), realm.getName());
 
         try {
 
@@ -64,7 +62,6 @@ public class JWTAuthorizationGrantType extends OAuth2GrantTypeBase {
             authorizationGrantContext.validateClient();
 
             //mandatory claims
-            authorizationGrantContext.validateTokenAudience(List.of(expectedAudience), false);
             authorizationGrantContext.validateIssuer();
             authorizationGrantContext.validateSubject();
 
@@ -88,6 +85,9 @@ public class JWTAuthorizationGrantType extends OAuth2GrantTypeBase {
             // assign the provider and perform validations associated to the jwt grant provider
             authorizationGrantContext.validateTokenActive(jwtAuthorizationGrantProvider.getAllowedClockSkew(), 300, jwtAuthorizationGrantProvider.isAssertionReuseAllowed());
 
+            // Validate audience
+            authorizationGrantContext.validateTokenAudience(jwtAuthorizationGrantProvider.getAllowedAudienceForJWTGrant(), false);
+
             //validate the JWT assertion and get the brokered identity from the idp
             BrokeredIdentityContext brokeredIdentityContext = jwtAuthorizationGrantProvider.validateAuthorizationGrantAssertion(authorizationGrantContext);
             if (brokeredIdentityContext == null) {
@@ -106,10 +106,11 @@ public class JWTAuthorizationGrantType extends OAuth2GrantTypeBase {
             String scopeParam = formParams.getFirst(OAuth2Constants.SCOPE);
             //TODO: scopes processing
 
-            UserSessionModel userSession = new UserSessionManager(session).createUserSession(realm, user, user.getUsername(), clientConnection.getRemoteHost(), "authorization-grant", false, null, null);
-            event.session(userSession);
             RootAuthenticationSessionModel rootAuthSession = new AuthenticationSessionManager(session).createAuthenticationSession(realm, false);
             AuthenticationSessionModel authSession = createSessionModel(rootAuthSession, user, client, scopeParam);
+            UserSessionModel userSession = new UserSessionManager(session).createUserSession(authSession.getParentSession().getId(), realm, user, user.getUsername(),
+                    clientConnection.getRemoteHost(), "authorization-grant", false, null, null, UserSessionModel.SessionPersistenceState.TRANSIENT);
+            event.session(userSession);
             ClientSessionContext clientSessionCtx = TokenManager.attachAuthenticationSession(this.session, userSession, authSession);
             return createTokenResponse(user, userSession, clientSessionCtx, scopeParam, true, null);
         }
@@ -127,6 +128,11 @@ public class JWTAuthorizationGrantType extends OAuth2GrantTypeBase {
         authSession.setClientNote(OIDCLoginProtocol.ISSUER, Urls.realmIssuer(session.getContext().getUri().getBaseUri(), realm.getName()));
         authSession.setClientNote(OIDCLoginProtocol.SCOPE_PARAM, scope);
         return authSession;
+    }
+
+    @Override
+    protected boolean useRefreshToken() {
+        return false; // jwt auth grant never generates the refresh token
     }
 
     @Override
