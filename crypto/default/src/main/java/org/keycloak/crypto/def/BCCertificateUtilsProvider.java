@@ -210,9 +210,9 @@ public class BCCertificateUtilsProvider implements CertificateUtilsProvider {
                             .setProvider(BouncyIntegration.PROVIDER);
                     break;
                 }
-                case JavaAlgorithm.MLDSA44:
-                case JavaAlgorithm.MLDSA65:
-                case JavaAlgorithm.MLDSA87:
+                case "ML-DSA-44":
+                case "ML-DSA-65":
+                case "ML-DSA-87":
                     signerBuilder = new JcaContentSignerBuilder(privateKey.getAlgorithm())
                             .setProvider(BouncyIntegration.PROVIDER);
                     break;

@@ -28,6 +28,7 @@ import org.keycloak.provider.ProviderConfigurationBuilder;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.spec.NamedParameterSpec;
 
 import static org.keycloak.provider.ProviderConfigProperty.LIST_TYPE;
 
@@ -60,6 +61,8 @@ public abstract class AbstractMldsaKeyProviderFactory implements KeyProviderFact
         }
         try {
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm);
+            NamedParameterSpec spec = new NamedParameterSpec(algorithm);
+            keyGen.initialize(spec);
             return keyGen.generateKeyPair();
         } catch (Exception e) {
             throw new RuntimeException(e);

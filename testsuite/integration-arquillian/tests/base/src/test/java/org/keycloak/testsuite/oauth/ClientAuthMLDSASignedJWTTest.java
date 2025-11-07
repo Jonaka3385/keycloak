@@ -27,22 +27,22 @@ public class ClientAuthMLDSASignedJWTTest extends AbstractClientAuthSignedJWTTes
     @Test
     public void testCodeToTokenRequestSuccessMLDSA65usingJwksUri() throws Exception {
         testCodeToTokenRequestSuccess(Algorithm.MLDSA65, null, true);
-    } // HTTP-Error 401
+    } // TODO HTTP-Error 400 Bad Request
 
     @Test
     public void testCodeToTokenRequestSuccessMLDSA65usingJwks() throws Exception {
         testCodeToTokenRequestSuccess(Algorithm.MLDSA65, null, false);
-    } // HTTP-Error 401
+    } // TODO HTTP-Error 400 Bad Request
 
     @Test
     public void testUploadCertificatePemMLDSA65() throws Exception {
         testUploadCertificatePEM(KeyUtils.generateMLDSAKey(Algorithm.MLDSA65), Algorithm.MLDSA65, null);
-    } // HTTP-Error 500
+    } // TODO HTTP-Error 500
 
     @Test
     public void testUploadPublicKeyPemMLDSA65() throws Exception {
         testUploadPublicKeyPem(KeyUtils.generateMLDSAKey(Algorithm.MLDSA65), Algorithm.MLDSA65, null);
-    } // HTTP-Error 500
+    } // TODO HTTP-Error 500
 
     @Override
     protected String getKeyAlgorithmFromJwaAlgorithm(String jwaAlgorithm, String curve) {
