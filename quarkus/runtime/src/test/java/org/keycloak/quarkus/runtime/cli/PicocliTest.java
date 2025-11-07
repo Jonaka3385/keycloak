@@ -474,7 +474,7 @@ public class PicocliTest extends AbstractConfigurationTest {
     }
 
     @Test
-    public void fastStartOptimizedSucceeds() {
+    public void startOptimizedSucceeds() {
         build("build", "--db=dev-file");
 
         System.setProperty("kc.http-enabled", "true");
@@ -985,6 +985,43 @@ public class PicocliTest extends AbstractConfigurationTest {
     }
 
     @Test
+    public void duplicatedCliOptions() {
+        var nonRunningPicocli = pseudoLaunch("start-dev", "--http-access-log-enabled=true", "--http-access-log-enabled=false");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        assertThat(nonRunningPicocli.getOutString(), containsString("WARNING: Duplicated options present in CLI: --http-access-log-enabled"));
+        onAfter();
+
+        nonRunningPicocli = pseudoLaunch("start-dev", "--http-access-log-enabled=true", "--http-access-log-enabled=false", "--db=postgres", "--db=dev-mem");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        assertThat(nonRunningPicocli.getOutString(), containsString("WARNING: Duplicated options present in CLI: --http-access-log-enabled, --db"));
+        onAfter();
+
+        nonRunningPicocli = pseudoLaunch("start-dev",
+                "--http-access-log-enabled=true", "--http-access-log-enabled=false",
+                "--db=postgres", "--db=dev-mem",
+                "--db-kind-my-store=mariadb", "--db-kind-my-store=dev-mem");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        assertThat(nonRunningPicocli.getOutString(), containsString("Duplicated options present in CLI: --db-kind-my-store, --http-access-log-enabled, --db"));
+        onAfter();
+
+        nonRunningPicocli = pseudoLaunch("start-dev", "--non-existing=yes", "--non-existing=no");
+        assertEquals(CommandLine.ExitCode.USAGE, nonRunningPicocli.exitCode);
+        assertThat(nonRunningPicocli.getOutString(), not(containsString("WARNING: Duplicated options present in CLI: --non-existing")));
+        assertThat(nonRunningPicocli.getErrString(), containsString("Unknown option: '--non-existing'"));
+        onAfter();
+
+        nonRunningPicocli = pseudoLaunch("start-dev", "-Dsome.property=123", "-Dsome.property=456");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        assertThat(nonRunningPicocli.getOutString(), containsString("WARNING: Duplicated options present in CLI: -Dsome.property"));
+        onAfter();
+
+        nonRunningPicocli = pseudoLaunch("start-dev", "something-wrong=asdf", "something-wrong=not-here");
+        assertEquals(CommandLine.ExitCode.USAGE, nonRunningPicocli.exitCode);
+        assertThat(nonRunningPicocli.getOutString(), not(containsString("WARNING: Duplicated options present in CLI: something-wrong")));
+        assertThat(nonRunningPicocli.getErrString(), containsString("Unknown option: 'something-wrong'"));
+    }
+
+    @Test
     public void httpOptimizedSerializers() {
         var nonRunningPicocli = pseudoLaunch("start-dev");
         assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
@@ -994,5 +1031,60 @@ public class PicocliTest extends AbstractConfigurationTest {
         nonRunningPicocli = pseudoLaunch("start-dev", "--features=http-optimized-serializers");
         assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
         assertExternalConfig("quarkus.rest.jackson.optimization.enable-reflection-free-serializers", "true");
+    }
+
+    @Test
+    public void tracingHiddenParentHeaders() {
+        var nonRunningPicocli = pseudoLaunch("start-dev", "--tracing-headers=Authorization=Bearer asdlkfjadsflkj");
+        assertEquals(CommandLine.ExitCode.USAGE, nonRunningPicocli.exitCode);
+        assertThat(nonRunningPicocli.getErrString(), containsString("Disabled option: '--tracing-headers'. Available only when Tracing is enabled"));
+        onAfter();
+
+        nonRunningPicocli = pseudoLaunch("start-dev", "--tracing-enabled=true", "--tracing-headers=Authorization=Bearer asdlkfjadsflkj");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        assertExternalConfig("quarkus.otel.exporter.otlp.traces.headers", "Authorization=Bearer asdlkfjadsflkj");
+        onAfter();
+
+        nonRunningPicocli = pseudoLaunch("start-dev", "--tracing-enabled=true", "--tracing-headers=Authorization=Bearer asdlkfjadsflkj,Host=localhost:8080");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        assertExternalConfig("quarkus.otel.exporter.otlp.traces.headers", "Authorization=Bearer asdlkfjadsflkj,Host=localhost:8080");
+    }
+
+    @Test
+    public void tracingHeaders() {
+        // tracing is disabled
+        var nonRunningPicocli = pseudoLaunch("start-dev", "--tracing-header-Authorization=Bearer asdlkfjadsflkj");
+        assertEquals(CommandLine.ExitCode.USAGE, nonRunningPicocli.exitCode);
+        onAfter();
+
+        // basic
+        nonRunningPicocli = pseudoLaunch("start-dev", "--tracing-enabled=true", "--tracing-header-Authorization=Bearer asdlkfjadsflkj");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        assertExternalConfig("quarkus.otel.exporter.otlp.traces.headers", "Authorization=Bearer asdlkfjadsflkj");
+        onAfter();
+
+        // multiple
+        nonRunningPicocli = pseudoLaunch("start-dev", "--tracing-enabled=true", "--tracing-header-Authorization=Bearer asdlkfjadsflkj", "--tracing-header-Host=localhost:8080");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        assertExternalConfig("quarkus.otel.exporter.otlp.traces.headers", "Authorization=Bearer asdlkfjadsflkj,Host=localhost:8080");
+        onAfter();
+
+        // other header
+        nonRunningPicocli = pseudoLaunch("start-dev", "--tracing-enabled=true", "--tracing-header-Content-length=300");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        assertExternalConfig("quarkus.otel.exporter.otlp.traces.headers", "Content-length=300");
+        onAfter();
+
+        // duplicated headers
+        nonRunningPicocli = pseudoLaunch("start-dev", "--tracing-enabled=true", "--tracing-header-Content-Language=en-US", "--tracing-header-Content-Language=de-DE");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        // the last is accepted
+        assertExternalConfig("quarkus.otel.exporter.otlp.traces.headers", "Content-Language=de-DE");
+        onAfter();
+
+        // Hidden 'tracing-headers' takes precedence
+        nonRunningPicocli = pseudoLaunch("start-dev", "--tracing-enabled=true", "--tracing-headers=Overridden-by-me=yes", "--tracing-header-Authorization=Bearer asdlkfjadsflkj", "--tracing-header-Host=localhost:8080");
+        assertEquals(CommandLine.ExitCode.OK, nonRunningPicocli.exitCode);
+        assertExternalConfig("quarkus.otel.exporter.otlp.traces.headers", "Overridden-by-me=yes");
     }
 }

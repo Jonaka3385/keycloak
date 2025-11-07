@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 
 public class KeycloakServerConfigBuilder {
 
+    private static final String SPI_OPTION = "spi-%s--%s--%s";
+
     private final String command;
     private final Map<String, String> options = new HashMap<>();
     private final Set<String> features = new HashSet<>();
@@ -95,6 +97,11 @@ public class KeycloakServerConfigBuilder {
         return this;
     }
 
+    public KeycloakServerConfigBuilder spiOption(String spi, String provider, String key, String value) {
+        options.put(String.format(SPI_OPTION, spi, provider, key), value);
+        return this;
+    }
+
     public KeycloakServerConfigBuilder dependency(String groupId, String artifactId) {
         dependencies.add(new DependencyBuilder().setGroupId(groupId).setArtifactId(artifactId).build());
         return this;
@@ -108,8 +115,7 @@ public class KeycloakServerConfigBuilder {
     public boolean tlsEnabled() {
         return tlsEnabled ;
     }
-
-
+    
     public KeycloakServerConfigBuilder cacheConfigFile(String resourcePath) {
         try {
             Path p = Paths.get(Objects.requireNonNull(getClass().getResource(resourcePath)).toURI());
@@ -244,10 +250,10 @@ public class KeycloakServerConfigBuilder {
 
     private Set<String> toFeatureStrings(Profile.Feature... features) {
         return Arrays.stream(features).map(f -> {
-            if (Profile.getFeatureVersions(f.getKey()).size() > 1) {
+            if (f.getVersion() > 1 || Profile.getFeatureVersions(f.getKey()).size() > 1) {
                 return f.getVersionedKey();
             }
-            return f.name().toLowerCase().replace('_', '-');
+            return f.getUnversionedKey();
         }).collect(Collectors.toSet());
     }
 
