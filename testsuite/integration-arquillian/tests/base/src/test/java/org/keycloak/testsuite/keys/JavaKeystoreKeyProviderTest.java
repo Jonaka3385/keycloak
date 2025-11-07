@@ -164,6 +164,21 @@ public class JavaKeystoreKeyProviderTest extends AbstractKeycloakTest {
         createSuccess(KeystoreUtil.KeystoreFormat.BCFKS, AlgorithmType.EDDSA, Algorithm.EdDSA, true);
     }
 
+    @Test
+    public void createJksMLDSA65() throws Exception {
+        createSuccess(KeystoreUtil.KeystoreFormat.JKS, AlgorithmType.MLDSA, Algorithm.MLDSA65, true);
+    }
+
+    @Test
+    public void createPkcs12MLDSA65() throws Exception {
+        createSuccess(KeystoreUtil.KeystoreFormat.PKCS12, AlgorithmType.MLDSA, Algorithm.MLDSA65, true);
+    }
+
+    @Test
+    public void createBcfksMLDSA65() throws Exception {
+        createSuccess(KeystoreUtil.KeystoreFormat.BCFKS, AlgorithmType.MLDSA, Algorithm.MLDSA65, true);
+    }
+
     private void createSuccess(KeystoreUtil.KeystoreFormat keystoreType, AlgorithmType algorithmType, String keyAlgorithm, boolean vault) throws Exception {
         KeystoreUtils.assumeKeystoreTypeSupported(keystoreType);
         generateKeystore(keystoreType, algorithmType, keyAlgorithm);

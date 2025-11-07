@@ -23,8 +23,10 @@ import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.common.util.PemUtils;
+import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.crypto.KeyType;
+import org.keycloak.crypto.KeyUse;
 import org.keycloak.rule.CryptoInitRule;
 import org.keycloak.util.JsonSerialization;
 
@@ -178,6 +180,46 @@ public abstract class JWKTest {
         byte[] data = "Some test string".getBytes(StandardCharsets.UTF_8);
         byte[] sign = sign(data, JavaAlgorithm.ES256, keyPair.getPrivate());
         verify(data, sign, JavaAlgorithm.ES256, publicKeyFromJwk);
+    }
+
+    @Test
+    public void publicMLDSA65Chain() throws Exception {
+        KeyPair keyPair = CryptoIntegration.getProvider().getKeyPairGen(Algorithm.MLDSA65).generateKeyPair();
+        PublicKey publicKey = keyPair.getPublic();
+        List<X509Certificate> certificates = Arrays.asList(generateV1SelfSignedCertificate(keyPair, "Test"), generateV1SelfSignedCertificate(keyPair, "Intermediate"));
+
+        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(publicKey)).algorithm("ML-DSA-65").akp(publicKey, KeyUse.SIG, certificates);
+
+        assertNotNull(jwk.getKeyId());
+        assertEquals("AKP", jwk.getKeyType());
+        assertEquals("ML-DSA-65", jwk.getAlgorithm());
+        assertEquals("sig", jwk.getPublicKeyUse());
+
+        assertTrue(jwk instanceof AKPPublicJWK);
+        assertNotNull(((AKPPublicJWK) jwk).getPub());
+        assertNotNull(jwk.getX509CertificateChain());
+
+        String[] expectedChain = new String[certificates.size()];
+        for (int i = 0; i < certificates.size(); i++) {
+            expectedChain[i] = PemUtils.encodeCertificate(certificates.get(i));
+        }
+
+        assertArrayEquals(expectedChain, jwk.getX509CertificateChain());
+        assertNotNull(jwk.getSha1x509Thumbprint());
+        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-1"), jwk.getSha1x509Thumbprint());
+        assertNotNull(jwk.getSha256x509Thumbprint());
+        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-256"), jwk.getSha256x509Thumbprint());
+
+        String jwkJson = JsonSerialization.writeValueAsString(jwk);
+
+        PublicKey publicKeyFromJwk = JWKParser.create().parse(jwkJson).toPublicKey();
+
+        // Parse
+        assertArrayEquals(publicKey.getEncoded(), publicKeyFromJwk.getEncoded());
+
+        byte[] data = "Some test string".getBytes(StandardCharsets.UTF_8);
+        byte[] sign = sign(data, JavaAlgorithm.MLDSA65, keyPair.getPrivate());
+        assertTrue(verify(data, sign, JavaAlgorithm.MLDSA65, publicKeyFromJwk));
     }
 
     @Test

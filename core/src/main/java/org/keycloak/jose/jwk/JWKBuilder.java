@@ -187,4 +187,18 @@ public class JWKBuilder {
 
         return k;
     }
+
+    public JWK akp(Key key, KeyUse keyUse, List<X509Certificate> certificates) {
+        JWK k = akp(key, keyUse);
+
+        if (certificates != null && !certificates.isEmpty()) {
+            String[] certificateChain = new String[certificates.size()];
+            for (int i = 0; i < certificates.size(); i++) {
+                certificateChain[i] = PemUtils.encodeCertificate(certificates.get(i));
+            }
+            k.setX509CertificateChain(certificateChain);
+        }
+
+        return k;
+    }
 }

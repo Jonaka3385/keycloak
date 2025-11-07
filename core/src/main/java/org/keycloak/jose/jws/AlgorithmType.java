@@ -29,4 +29,5 @@ public enum AlgorithmType {
     ECDSA,
     EDDSA,
     MLDSA
+
 }
