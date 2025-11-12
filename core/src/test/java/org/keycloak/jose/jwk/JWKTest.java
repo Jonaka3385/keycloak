@@ -20,6 +20,7 @@ package org.keycloak.jose.jwk;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.keycloak.common.crypto.CryptoIntegration;
+import org.keycloak.common.util.Base64;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.common.util.PemUtils;
@@ -47,6 +48,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.keycloak.common.util.CertificateUtils.generateV1SelfSignedCertificate;
 import static org.keycloak.common.util.CertificateUtils.generateV3Certificate;
 
@@ -319,6 +321,32 @@ public abstract class JWKTest {
         assertNotNull(pub);
         assertTrue(pub.getAlgorithm().startsWith("EC"));
         assertEquals("X.509", pub.getFormat());
+    }
+
+    @Test
+    public void toPublicKey_MLDSA65() {
+
+        AKPPublicJWK akpJwk = new AKPPublicJWK();
+        akpJwk.setKeyType(KeyType.AKP);
+        akpJwk.setAlgorithm("ML-DSA-65");
+
+        KeyPair kp;
+        try {
+            kp = CryptoIntegration.getProvider().getKeyPairGen(Algorithm.MLDSA65).generateKeyPair();
+        } catch (Exception e) {
+            fail();
+            return;
+        }
+        PublicKey pub = kp.getPublic();
+        akpJwk.setPub(Base64.encodeBytes(pub.getEncoded()));
+
+        JWKParser sut = JWKParser.create(akpJwk);
+
+        PublicKey parsedPub = sut.toPublicKey();
+        assertNotNull(parsedPub);
+        assertEquals(pub, parsedPub);
+        assertTrue(parsedPub.getAlgorithm().startsWith("ML-DSA-"));
+        assertEquals("X.509", parsedPub.getFormat());
     }
 
     private byte[] sign(byte[] data, String javaAlgorithm, PrivateKey key) throws Exception {
