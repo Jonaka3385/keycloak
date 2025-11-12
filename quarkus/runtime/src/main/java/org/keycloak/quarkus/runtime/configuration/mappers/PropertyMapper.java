@@ -311,7 +311,7 @@ public class PropertyMapper<T> {
             return configValue;
         }
 
-        // by unsetting the name this will not be seen as directly modified by the user
+        // by unsetting the configsource name this will not be seen as directly modified by the user
         return configValue.from().withName(name).withValue(mappedValue).withRawValue(value).withConfigSourceName(null).build();
     }
 
@@ -532,6 +532,26 @@ public class PropertyMapper<T> {
         public Builder<T> wildcardMapFrom(String mapFrom, ValueMapper function) {
             this.mapFrom = mapFrom;
             this.wildcardMapFrom = function;
+            return this;
+        }
+
+        /**
+         * Validates wildcard keys.
+         * You can validate whether an allowed key is provided as the wildcard key.
+         * <p>
+         * f.e. check whether existing feature is referenced
+         * <pre>
+         * kc.feature-enabled-<feature>:v1
+         * → (key, value) -> is key a feature? if not, fail
+         *
+         * @param validator validator with parameters (wildcardKey, value)
+         */
+        public Builder<T> wildcardKeysValidator(BiConsumer<String, String> validator) {
+            addValidator((mapper, configValue) -> {
+                var wildcardMapper = (WildcardPropertyMapper<?>) mapper;
+                var key = wildcardMapper.extractWildcardValue(configValue.getName()).orElseThrow(() -> new PropertyException("Cannot determine wildcard key."));
+                validator.accept(key, configValue.getValue());
+            });
             return this;
         }
 

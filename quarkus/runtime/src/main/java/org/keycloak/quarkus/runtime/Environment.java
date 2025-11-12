@@ -178,8 +178,8 @@ public final class Environment {
         return Boolean.getBoolean(KC_CONFIG_REBUILD_CHECK);
     }
 
-    public static void setRebuildCheck() {
-        System.setProperty(KC_CONFIG_REBUILD_CHECK, "true");
+    public static void setRebuildCheck(boolean check) {
+        System.setProperty(KC_CONFIG_REBUILD_CHECK, Boolean.toString(check));
     }
 
     public static boolean isRebuilt() {
@@ -201,7 +201,7 @@ public final class Environment {
         Profile profile = Profile.getInstance();
 
         if (profile == null) {
-            profile = Profile.configure(new QuarkusProfileConfigResolver());
+            profile = Profile.configure(new QuarkusSingleProfileConfigResolver(), new QuarkusProfileConfigResolver());
         }
 
         return profile;
