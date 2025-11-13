@@ -61,13 +61,14 @@ public class WorkflowResource {
      *
      * @param type the resource type
      * @param resourceId the resource id
-     * @param notBefore optional notBefore time in milliseconds to schedule the first workflow step,
-     *                  it overrides the first workflow step time configuration (after).
+     * @param notBefore optional value representing the time to schedule the first workflow step, overriding the first
+     *                 step time configuration (after). The value is either an integer representing the seconds from now,
+     *                 an integer followed by 'ms' representing milliseconds from now, or an ISO-8601 date string.
      */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("bind/{type}/{resourceId}")
-    public void bind(@PathParam("type") ResourceType type, @PathParam("resourceId") String resourceId, Long notBefore) {
+    public void bind(@PathParam("type") ResourceType type, @PathParam("resourceId") String resourceId, String notBefore) {
         Object resource = provider.getResourceTypeSelector(type).resolveResource(resourceId);
 
         if (resource == null) {
@@ -79,6 +80,25 @@ public class WorkflowResource {
         }
 
         provider.bind(workflow, type, resourceId);
+    }
+
+    /**
+     * Deactivate the workflow for the resource.
+     *
+     * @param type the resource type
+     * @param resourceId the resource id
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("deactivate/{type}/{resourceId}")
+    public void deactivate(@PathParam("type") ResourceType type, @PathParam("resourceId") String resourceId) {
+        Object resource = provider.getResourceTypeSelector(type).resolveResource(resourceId);
+
+        if (resource == null) {
+            throw new BadRequestException("Resource with id " + resourceId + " not found");
+        }
+
+        provider.deactivate(workflow, resourceId);
     }
 
 }

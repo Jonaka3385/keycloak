@@ -257,12 +257,53 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
 
         // revert conditions, but change one of the steps
         workflow.setConditions(null);
-        workflow.getSteps().get(0).setAfter(Duration.ofDays(8).toMillis());
+        workflow.getSteps().get(0).setAfter("8D"); // 8 days
         try (Response response = workflows.workflow(workflow.getId()).update(workflow)) {
             assertThat(response.getStatus(), is(Response.Status.BAD_REQUEST.getStatusCode()));
         }
 
     }
+
+    @Test
+    public void testSearch() {
+        // create a few workflows with different names
+        String[] workflowNames = {"alpha-workflow", "beta-workflow", "gamma-workflow", "delta-workflow"};
+        for (String name : workflowNames) {
+            managedRealm.admin().workflows().create(WorkflowRepresentation.withName(name)
+                    .onEvent(ResourceOperationType.USER_ADDED.toString())
+                    .withSteps(
+                            WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
+                                    .after(Duration.ofDays(5))
+                                    .build()
+                    ).build()).close();
+        }
+
+        // use the API to search for workflows by name, both partial and exact matches
+        WorkflowsResource workflows = managedRealm.admin().workflows();
+        List<WorkflowRepresentation> representations =  workflows.list("alpha", false, null, null);
+        assertThat(representations, Matchers.hasSize(1));
+        assertThat(representations.get(0).getName(), is("alpha-workflow"));
+
+        representations =  workflows.list("workflow", false, null, null);
+        assertThat(representations, Matchers.hasSize(4));
+        representations =  workflows.list("beta-workflow", true, null, null);
+        assertThat(representations, Matchers.hasSize(1));
+        assertThat(representations.get(0).getName(), is("beta-workflow"));
+        representations =  workflows.list("nonexistent", false, null, null);
+        assertThat(representations, Matchers.hasSize(0));
+
+        // test pagination parameters
+        representations =  workflows.list(null, null, 1, 2);
+        assertThat(representations, Matchers.hasSize(2));
+        // returned workflows should be ordered by name
+        assertThat(representations.get(0).getName(), is("beta-workflow"));
+        assertThat(representations.get(1).getName(), is("delta-workflow"));
+
+        representations =  workflows.list("gamma", false, 0, 10);
+        assertThat(representations, Matchers.hasSize(1));
+        assertThat(representations.get(0).getName(), is("gamma-workflow"));
+    }
+
 
     @Test
     public void testWorkflowDoesNotFallThroughStepsInSingleRun() {
@@ -638,7 +679,7 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
                 .build();
         try (Response response = managedRealm.admin().workflows().create(workflows)) {
             assertThat(response.getStatus(), is(Response.Status.BAD_REQUEST.getStatusCode()));
-            assertThat(response.readEntity(ErrorRepresentation.class).getErrorMessage(), equalTo("Step 'after' time condition cannot be negative."));
+            assertThat(response.readEntity(ErrorRepresentation.class).getErrorMessage(), equalTo("Step 'after' configuration cannot be negative."));
         }
     }
 
