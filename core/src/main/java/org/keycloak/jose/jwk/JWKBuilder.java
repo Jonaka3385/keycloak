@@ -83,33 +83,6 @@ public class JWKBuilder {
         return rsa(key);
     }
 
-    public JWK akp(PublicKey key) {
-        AKPPublicJWK k = new AKPPublicJWK();
-
-        String kid = this.kid != null ? this.kid : KeyUtils.createKeyId(key);
-        k.setKeyId(kid);
-        k.setKeyType(KeyType.AKP);
-        k.setAlgorithm(algorithm);
-        k.setPub(AKPUtils.toEncodedPub(key, algorithm));
-        k.setPublicKeyUse(KeyUse.SIG.getSpecName());
-
-        return k;
-    }
-
-    public JWK akp(PublicKey key, KeyUse keyUse) {
-        AKPPublicJWK k = new AKPPublicJWK();
-
-        String kid = this.kid != null ? this.kid : KeyUtils.createKeyId(key);
-        k.setKeyId(kid);
-        k.setKeyType(KeyType.AKP);
-        k.setAlgorithm(algorithm);
-        k.setPublicKeyUse(keyUse == null ? KeyUse.SIG.getSpecName() : keyUse.getSpecName());
-        k.setPub(AKPUtils.toEncodedPub(key, algorithm));
-        k.setPublicKeyUse(KeyUse.SIG.getSpecName());
-
-        return k;
-    }
-
     public JWK rsa(Key key) {
         return rsa(key, null, KeyUse.SIG);
     }

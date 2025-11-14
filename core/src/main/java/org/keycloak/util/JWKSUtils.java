@@ -17,21 +17,6 @@
 
 package org.keycloak.util;
 
-import org.jboss.logging.Logger;
-import org.keycloak.crypto.KeyUse;
-import org.keycloak.crypto.KeyWrapper;
-import org.keycloak.crypto.PublicKeysWrapper;
-import org.keycloak.common.util.Base64Url;
-import org.keycloak.crypto.KeyType;
-import org.keycloak.jose.jwk.ECPublicJWK;
-import org.keycloak.jose.jwk.JSONWebKeySet;
-import org.keycloak.jose.jwk.JWK;
-import org.keycloak.jose.jwk.JWKParser;
-import org.keycloak.jose.jwk.OKPPublicJWK;
-import org.keycloak.jose.jwk.AKPPublicJWK;
-import org.keycloak.jose.jwk.RSAPublicJWK;
-import org.keycloak.jose.jws.crypto.HashUtils;
-
 import java.io.IOException;
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -40,6 +25,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+
+import org.keycloak.common.util.Base64Url;
+import org.keycloak.crypto.KeyType;
+import org.keycloak.crypto.KeyUse;
+import org.keycloak.crypto.KeyWrapper;
+import org.keycloak.crypto.PublicKeysWrapper;
+import org.keycloak.jose.jwk.ECPublicJWK;
+import org.keycloak.jose.jwk.JSONWebKeySet;
+import org.keycloak.jose.jwk.JWK;
+import org.keycloak.jose.jwk.JWKParser;
+import org.keycloak.jose.jwk.OKPPublicJWK;
+import org.keycloak.jose.jwk.RSAPublicJWK;
+import org.keycloak.jose.jws.crypto.HashUtils;
+
+import org.jboss.logging.Logger;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
@@ -55,7 +55,6 @@ public class JWKSUtils {
         JWK_THUMBPRINT_REQUIRED_MEMBERS.put(KeyType.RSA, new String[] { RSAPublicJWK.MODULUS, RSAPublicJWK.PUBLIC_EXPONENT });
         JWK_THUMBPRINT_REQUIRED_MEMBERS.put(KeyType.EC, new String[] { ECPublicJWK.CRV, ECPublicJWK.X, ECPublicJWK.Y });
         JWK_THUMBPRINT_REQUIRED_MEMBERS.put(KeyType.OKP, new String[] { OKPPublicJWK.CRV, OKPPublicJWK.X });
-        JWK_THUMBPRINT_REQUIRED_MEMBERS.put(KeyType.AKP, new String[] { AKPPublicJWK.ALGORITHM, AKPPublicJWK.PUB });
     }
 
     /**
