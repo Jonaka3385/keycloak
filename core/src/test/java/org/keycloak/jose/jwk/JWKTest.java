@@ -20,14 +20,11 @@ package org.keycloak.jose.jwk;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.keycloak.common.crypto.CryptoIntegration;
-import org.keycloak.common.util.Base64;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.common.util.PemUtils;
-import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.crypto.KeyType;
-import org.keycloak.crypto.KeyUse;
 import org.keycloak.rule.CryptoInitRule;
 import org.keycloak.util.JsonSerialization;
 
@@ -48,7 +45,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.keycloak.common.util.CertificateUtils.generateV1SelfSignedCertificate;
 import static org.keycloak.common.util.CertificateUtils.generateV3Certificate;
 
@@ -185,46 +181,6 @@ public abstract class JWKTest {
     }
 
     @Test
-    public void publicMLDSA65Chain() throws Exception {
-        KeyPair keyPair = CryptoIntegration.getProvider().getKeyPairGen(Algorithm.MLDSA65).generateKeyPair();
-        PublicKey publicKey = keyPair.getPublic();
-        List<X509Certificate> certificates = Arrays.asList(generateV1SelfSignedCertificate(keyPair, "Test"), generateV1SelfSignedCertificate(keyPair, "Intermediate"));
-
-        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(publicKey)).algorithm("ML-DSA-65").akp(publicKey, KeyUse.SIG, certificates);
-
-        assertNotNull(jwk.getKeyId());
-        assertEquals("AKP", jwk.getKeyType());
-        assertEquals("ML-DSA-65", jwk.getAlgorithm());
-        assertEquals("sig", jwk.getPublicKeyUse());
-
-        assertTrue(jwk instanceof AKPPublicJWK);
-        assertNotNull(((AKPPublicJWK) jwk).getPub());
-        assertNotNull(jwk.getX509CertificateChain());
-
-        String[] expectedChain = new String[certificates.size()];
-        for (int i = 0; i < certificates.size(); i++) {
-            expectedChain[i] = PemUtils.encodeCertificate(certificates.get(i));
-        }
-
-        assertArrayEquals(expectedChain, jwk.getX509CertificateChain());
-        assertNotNull(jwk.getSha1x509Thumbprint());
-        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-1"), jwk.getSha1x509Thumbprint());
-        assertNotNull(jwk.getSha256x509Thumbprint());
-        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-256"), jwk.getSha256x509Thumbprint());
-
-        String jwkJson = JsonSerialization.writeValueAsString(jwk);
-
-        PublicKey publicKeyFromJwk = JWKParser.create().parse(jwkJson).toPublicKey();
-
-        // Parse
-        assertArrayEquals(publicKey.getEncoded(), publicKeyFromJwk.getEncoded());
-
-        byte[] data = "Some test string".getBytes(StandardCharsets.UTF_8);
-        byte[] sign = sign(data, JavaAlgorithm.MLDSA65, keyPair.getPrivate());
-        assertTrue(verify(data, sign, JavaAlgorithm.MLDSA65, publicKeyFromJwk));
-    }
-
-    @Test
     public void testCertificateGenerationWithRsaAndEc() throws Exception {
         KeyPairGenerator keyGenRsa = CryptoIntegration.getProvider().getKeyPairGen(KeyType.RSA);
         KeyPairGenerator keyGenEc = CryptoIntegration.getProvider().getKeyPairGen(KeyType.EC);
@@ -321,32 +277,6 @@ public abstract class JWKTest {
         assertNotNull(pub);
         assertTrue(pub.getAlgorithm().startsWith("EC"));
         assertEquals("X.509", pub.getFormat());
-    }
-
-    @Test
-    public void toPublicKey_MLDSA65() {
-
-        AKPPublicJWK akpJwk = new AKPPublicJWK();
-        akpJwk.setKeyType(KeyType.AKP);
-        akpJwk.setAlgorithm("ML-DSA-65");
-
-        KeyPair kp;
-        try {
-            kp = CryptoIntegration.getProvider().getKeyPairGen(Algorithm.MLDSA65).generateKeyPair();
-        } catch (Exception e) {
-            fail();
-            return;
-        }
-        PublicKey pub = kp.getPublic();
-        akpJwk.setPub(Base64.encodeBytes(pub.getEncoded()));
-
-        JWKParser sut = JWKParser.create(akpJwk);
-
-        PublicKey parsedPub = sut.toPublicKey();
-        assertNotNull(parsedPub);
-        assertEquals(pub, parsedPub);
-        assertTrue(parsedPub.getAlgorithm().startsWith("ML-DSA-"));
-        assertEquals("X.509", parsedPub.getFormat());
     }
 
     private byte[] sign(byte[] data, String javaAlgorithm, PrivateKey key) throws Exception {

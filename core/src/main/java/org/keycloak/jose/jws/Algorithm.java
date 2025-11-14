@@ -43,9 +43,9 @@ public enum Algorithm {
     EdDSA(AlgorithmType.EDDSA, null),
     Ed25519(AlgorithmType.EDDSA, null),
     Ed448(AlgorithmType.EDDSA, null),
-    MLDSA44(AlgorithmType.MLDSA, null),
-    MLDSA65(AlgorithmType.MLDSA, null),
-    MLDSA87(AlgorithmType.MLDSA, null),
+    ML_DSA_44(AlgorithmType.ML_DSA, null),
+    ML_DSA_65(AlgorithmType.ML_DSA, null),
+    ML_DSA_87(AlgorithmType.ML_DSA, null),
     ;
 
     private AlgorithmType type;

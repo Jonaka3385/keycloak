@@ -41,9 +41,9 @@ public class JavaAlgorithm {
     public static final String SHAKE256 = "SHAKE256";
 
     /* ML-DSA */
-    public static final String MLDSA44 = "ML-DSA-44";
-    public static final String MLDSA65 = "ML-DSA-65";
-    public static final String MLDSA87 = "ML-DSA-87";
+    public static final String ML_DSA_44 = "ML-DSA-44";
+    public static final String ML_DSA_65 = "ML-DSA-65";
+    public static final String ML_DSA_87 = "ML-DSA-87";
 
     public static String getJavaAlgorithm(String algorithm) {
         return getJavaAlgorithm(algorithm, null);
@@ -75,12 +75,12 @@ public class JavaAlgorithm {
                 return PS384;
             case Algorithm.PS512:
                 return PS512;
-            case Algorithm.MLDSA44:
-                return MLDSA44;
-            case Algorithm.MLDSA65:
-                return MLDSA65;
-            case Algorithm.MLDSA87:
-                return MLDSA87;
+            case Algorithm.ML_DSA_44:
+                return ML_DSA_44;
+            case Algorithm.ML_DSA_65:
+                return ML_DSA_65;
+            case Algorithm.ML_DSA_87:
+                return ML_DSA_87;
             case Algorithm.EdDSA:
                 if (curve != null) {
                     return curve;
@@ -135,9 +135,9 @@ public class JavaAlgorithm {
                     }
                 }
                 return SHA512;
-            case MLDSA44:
-            case MLDSA65:
-            case MLDSA87:
+            case ML_DSA_44:
+            case ML_DSA_65:
+            case ML_DSA_87:
                 return SHAKE256;
             case Algorithm.AES:
                 return AES;
@@ -157,9 +157,9 @@ public class JavaAlgorithm {
             case Algorithm.Ed448:
             case Algorithm.Ed25519:
                 return KeyType.OKP;
-            case Algorithm.MLDSA44:
-            case Algorithm.MLDSA65:
-            case Algorithm.MLDSA87:
+            case Algorithm.ML_DSA_44:
+            case Algorithm.ML_DSA_65:
+            case Algorithm.ML_DSA_87:
                 return KeyType.AKP;
             default:
                 return KeyType.OCT;

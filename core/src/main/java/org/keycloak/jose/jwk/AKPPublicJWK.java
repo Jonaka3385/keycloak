@@ -18,13 +18,12 @@
 package org.keycloak.jose.jwk;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.keycloak.crypto.KeyType;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * @author <a href="mailto:takashi.norimatsu.ws@hitachi.com">Takashi Norimatsu</a>
+ */
 public class AKPPublicJWK extends JWK {
-
-    public static final String AKP = KeyType.AKP;
 
     public static final String PUB = "pub";
 
@@ -43,13 +42,8 @@ public class AKPPublicJWK extends JWK {
     @Override
     public <T> T getOtherClaim(String claimName, Class<T> claimType) {
         Object claim = null;
-        switch (claimName) {
-            case ALGORITHM:
-                claim = getAlgorithm();
-                break;
-            case PUB:
-                claim = getPub();
-                break;
+        if (claimName.equals(PUB)) {
+            claim = getPub();
         }
         if (claim != null) {
             return claimType.cast(claim);
@@ -57,4 +51,5 @@ public class AKPPublicJWK extends JWK {
             return super.getOtherClaim(claimName, claimType);
         }
     }
+
 }

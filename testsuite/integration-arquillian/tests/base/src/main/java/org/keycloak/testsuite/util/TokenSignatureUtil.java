@@ -123,9 +123,9 @@ public class TokenSignatureUtil {
             case Algorithm.Ed448:
                 registerKeyProvider(realm, "eddsaEllipticCurveKey", jwaAlgorithmName, "eddsa-generated", adminClient, testContext);
                 break;
-            case Algorithm.MLDSA44:
-            case Algorithm.MLDSA65:
-            case Algorithm.MLDSA87:
+            case Algorithm.ML_DSA_44:
+            case Algorithm.ML_DSA_65:
+            case Algorithm.ML_DSA_87:
                 registerKeyProvider(realm, "ML-DSA", jwaAlgorithmName, GeneratedMldsaKeyProviderFactory.ID, adminClient, testContext);
                 break;
         }

@@ -167,17 +167,17 @@ public class JavaKeystoreKeyProviderTest {
 
     @Test
     public void createJksMLDSA65() throws Exception {
-        createSuccess(KeystoreUtil.KeystoreFormat.JKS, AlgorithmType.MLDSA, Algorithm.MLDSA65, true);
+        createSuccess(KeystoreUtil.KeystoreFormat.JKS, AlgorithmType.ML_DSA, Algorithm.ML_DSA_65, true);
     }
 
     @Test
     public void createPkcs12MLDSA65() throws Exception {
-        createSuccess(KeystoreUtil.KeystoreFormat.PKCS12, AlgorithmType.MLDSA, Algorithm.MLDSA65, true);
+        createSuccess(KeystoreUtil.KeystoreFormat.PKCS12, AlgorithmType.ML_DSA, Algorithm.ML_DSA_65, true);
     }
 
     @Test
     public void createBcfksMLDSA65() throws Exception {
-        createSuccess(KeystoreUtil.KeystoreFormat.BCFKS, AlgorithmType.MLDSA, Algorithm.MLDSA65, true);
+        createSuccess(KeystoreUtil.KeystoreFormat.BCFKS, AlgorithmType.ML_DSA, Algorithm.ML_DSA_65, true);
     }
 
     private void createSuccess(KeystoreUtil.KeystoreFormat keystoreType, AlgorithmType algorithmType, String keyAlgorithm, boolean vault) throws Exception {
@@ -226,7 +226,7 @@ public class JavaKeystoreKeyProviderTest {
                 assertEquals(KeyType.OKP, key.getType());
                 assertEquals(keyAlgorithm, key.getAlgorithm());
             }
-            case MLDSA -> {
+            case ML_DSA -> {
                 assertEquals(KeyType.AKP, key.getType());
                 assertEquals(keyAlgorithm, key.getAlgorithm());
             }
@@ -393,8 +393,8 @@ public class JavaKeystoreKeyProviderTest {
                 this.generatedKeystore = cryptoHelper.keystore().generateKeystore(folder, keystoreType, "keyalias", "password", "password",
                         KeyUtils.generateEdDSAKey(Algorithm.Ed25519));
             }
-            case MLDSA -> {
-                this.generatedKeystore = KeystoreUtils.generateKeystore(folder, keystoreType, "keyalias", "password", "password",
+            case ML_DSA -> {
+                this.generatedKeystore = cryptoHelper.keystore().generateKeystore(folder, keystoreType, "keyalias", "password", "password",
                         KeyUtils.generateMLDSAKey(keyAlgorithm));
             }
         }

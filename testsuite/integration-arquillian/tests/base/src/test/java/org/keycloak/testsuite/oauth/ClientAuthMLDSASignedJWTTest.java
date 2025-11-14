@@ -26,22 +26,22 @@ public class ClientAuthMLDSASignedJWTTest extends AbstractClientAuthSignedJWTTes
 
     @Test
     public void testCodeToTokenRequestSuccessMLDSA65usingJwksUri() throws Exception {
-        testCodeToTokenRequestSuccess(Algorithm.MLDSA65, null, true);
+        testCodeToTokenRequestSuccess(Algorithm.ML_DSA_65, null, true);
     } // TODO HTTP-Error 401
 
     @Test
     public void testCodeToTokenRequestSuccessMLDSA65usingJwks() throws Exception {
-        testCodeToTokenRequestSuccess(Algorithm.MLDSA65, null, false);
+        testCodeToTokenRequestSuccess(Algorithm.ML_DSA_65, null, false);
     } // TODO HTTP-Error 401
 
     @Test
     public void testUploadCertificatePemMLDSA65() throws Exception {
-        testUploadCertificatePEM(KeyUtils.generateMLDSAKey(Algorithm.MLDSA65), Algorithm.MLDSA65, null);
+        testUploadCertificatePEM(KeyUtils.generateMLDSAKey(Algorithm.ML_DSA_65), Algorithm.ML_DSA_65, null);
     } // TODO HTTP-Error 500
 
     @Test
     public void testUploadPublicKeyPemMLDSA65() throws Exception {
-        testUploadPublicKeyPem(KeyUtils.generateMLDSAKey(Algorithm.MLDSA65), Algorithm.MLDSA65, null);
+        testUploadPublicKeyPem(KeyUtils.generateMLDSAKey(Algorithm.ML_DSA_65), Algorithm.ML_DSA_65, null);
     } // TODO HTTP-Error 500
 
     @Override

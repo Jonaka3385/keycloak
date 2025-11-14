@@ -163,7 +163,7 @@ public class JavaKeystoreKeyProviderFactory implements KeyProviderFactory {
         if (Profile.isFeatureEnabled(Profile.Feature.ML_DSA)) {
             algorithms = Stream.of(
                             List.of(Algorithm.AES, Algorithm.EdDSA),
-                            List.of(Algorithm.MLDSA44, Algorithm.MLDSA65, Algorithm.MLDSA87),
+                            List.of(Algorithm.ML_DSA_44, Algorithm.ML_DSA_65, Algorithm.ML_DSA_87),
                             List.of(Algorithm.ES256, Algorithm.ES384, Algorithm.ES512),
                             Attributes.HS_ALGORITHM_PROPERTY.getOptions(),
                             Attributes.RS_ALGORITHM_PROPERTY.getOptions(),

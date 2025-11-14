@@ -17,24 +17,22 @@
 
 package org.keycloak.jose.jwk;
 
-import static org.keycloak.jose.jwk.JWKUtil.toIntegerBytes;
-
-import java.security.Key;
-import java.security.PublicKey;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.ECPublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.common.util.PemUtils;
 import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.KeyType;
 import org.keycloak.crypto.KeyUse;
+
+import java.security.Key;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Collections;
+import java.util.List;
+
+import static org.keycloak.jose.jwk.JWKUtil.toIntegerBytes;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -83,6 +81,33 @@ public class JWKBuilder {
     public JWK rs256(PublicKey key) {
         this.algorithm = Algorithm.RS256;
         return rsa(key);
+    }
+
+    public JWK akp(PublicKey key) {
+        AKPPublicJWK k = new AKPPublicJWK();
+
+        String kid = this.kid != null ? this.kid : KeyUtils.createKeyId(key);
+        k.setKeyId(kid);
+        k.setKeyType(KeyType.AKP);
+        k.setAlgorithm(algorithm);
+        k.setPub(AKPUtils.toEncodedPub(key, algorithm));
+        k.setPublicKeyUse(KeyUse.SIG.getSpecName());
+
+        return k;
+    }
+
+    public JWK akp(PublicKey key, KeyUse keyUse) {
+        AKPPublicJWK k = new AKPPublicJWK();
+
+        String kid = this.kid != null ? this.kid : KeyUtils.createKeyId(key);
+        k.setKeyId(kid);
+        k.setKeyType(KeyType.AKP);
+        k.setAlgorithm(algorithm);
+        k.setPublicKeyUse(keyUse == null ? KeyUse.SIG.getSpecName() : keyUse.getSpecName());
+        k.setPub(AKPUtils.toEncodedPub(key, algorithm));
+        k.setPublicKeyUse(KeyUse.SIG.getSpecName());
+
+        return k;
     }
 
     public JWK rsa(Key key) {
@@ -170,39 +195,5 @@ public class JWKBuilder {
 
     public JWK okp(Key key, KeyUse keyUse) {
         return EdEC_UTILS.okp(kid, algorithm, key, keyUse);
-    }
-
-    public JWK akp(Key key) {
-        return akp(key, DEFAULT_PUBLIC_KEY_USE);
-    }
-
-    public JWK akp(Key key, KeyUse keyUse) {
-        AKPPublicJWK k = new AKPPublicJWK();
-        byte[] x509Encoded = key.getEncoded();
-        SubjectPublicKeyInfo spki = SubjectPublicKeyInfo.getInstance(x509Encoded);
-        byte[] rawPublicKeyBytes = spki.getPublicKeyData().getBytes();
-        String jwk_pub_key = Base64.getUrlEncoder().withoutPadding().encodeToString(rawPublicKeyBytes);
-
-        k.setKeyId(kid);
-        k.setKeyType(KeyType.AKP);
-        k.setAlgorithm(algorithm);
-        k.setPublicKeyUse(keyUse == null ? DEFAULT_PUBLIC_KEY_USE.getSpecName() : keyUse.getSpecName());
-        k.setPub(jwk_pub_key);
-
-        return k;
-    }
-
-    public JWK akp(Key key, KeyUse keyUse, List<X509Certificate> certificates) {
-        JWK k = akp(key, keyUse);
-
-        if (certificates != null && !certificates.isEmpty()) {
-            String[] certificateChain = new String[certificates.size()];
-            for (int i = 0; i < certificates.size(); i++) {
-                certificateChain[i] = PemUtils.encodeCertificate(certificates.get(i));
-            }
-            k.setX509CertificateChain(certificateChain);
-        }
-
-        return k;
     }
 }

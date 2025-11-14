@@ -21,7 +21,7 @@ import org.keycloak.models.KeycloakSession;
 
 public class MLDSA87ClientSignatureVerifierProviderFactory implements ClientSignatureVerifierProviderFactory {
 
-    public static final String ID = Algorithm.MLDSA87;
+    public static final String ID = Algorithm.ML_DSA_87;
 
     @Override
     public String getId() {
@@ -30,6 +30,6 @@ public class MLDSA87ClientSignatureVerifierProviderFactory implements ClientSign
 
     @Override
     public ClientSignatureVerifierProvider create(KeycloakSession session) {
-        return new MLDSAClientSignatureVerifierProvider(session, Algorithm.MLDSA87);
+        return new MLDSAClientSignatureVerifierProvider(session, ID);
     }
 }

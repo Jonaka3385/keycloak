@@ -166,9 +166,9 @@ public class TestingOIDCEndpointsApplicationResource {
                     keyUse = KeyUse.ENC;
                     keyPair = KeyUtils.generateRsaKeyPair(2048);
                     break;
-                case Algorithm.MLDSA44:
-                case Algorithm.MLDSA65:
-                case Algorithm.MLDSA87:
+                case Algorithm.ML_DSA_44:
+                case Algorithm.ML_DSA_65:
+                case Algorithm.ML_DSA_87:
                     keyType = KeyType.AKP;
                     keyPair = generateMldsaKey(jwaAlgorithm);
                     break;
@@ -407,9 +407,9 @@ public class TestingOIDCEndpointsApplicationResource {
             case Algorithm.ES384:
             case Algorithm.ES512:
             case Algorithm.EdDSA:
-            case Algorithm.MLDSA44:
-            case Algorithm.MLDSA65:
-            case Algorithm.MLDSA87:
+            case Algorithm.ML_DSA_44:
+            case Algorithm.ML_DSA_65:
+            case Algorithm.ML_DSA_87:
             case Algorithm.HS256:
             case Algorithm.HS384:
             case Algorithm.HS512:

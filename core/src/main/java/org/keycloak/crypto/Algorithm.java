@@ -42,11 +42,6 @@ public interface Algorithm {
     String Ed25519 = "Ed25519";
     String Ed448 = "Ed448";
 
-    /* ML-DSA */
-    String MLDSA44 = "ML-DSA-44";
-    String MLDSA65 = "ML-DSA-65";
-    String MLDSA87 = "ML-DSA-87";
-
     /* RSA Encryption Algorithms */
     String RSA1_5 = CryptoConstants.RSA1_5;
     String RSA_OAEP = CryptoConstants.RSA_OAEP;
@@ -59,4 +54,9 @@ public interface Algorithm {
     String ECDH_ES_A128KW = CryptoConstants.ECDH_ES_A128KW;
     String ECDH_ES_A192KW = CryptoConstants.ECDH_ES_A192KW;
     String ECDH_ES_A256KW = CryptoConstants.ECDH_ES_A256KW;
+
+    /* ML-DSA algorithms */
+    String ML_DSA_44 =  "ML-DSA-44";
+    String ML_DSA_65 =  "ML-DSA-65";
+    String ML_DSA_87 =  "ML-DSA-87";
 }

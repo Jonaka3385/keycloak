@@ -112,11 +112,11 @@ public class ServerJWKTest {
 
     @Test
     public void publicMLDSA65() throws Exception {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(Algorithm.MLDSA65);
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(Algorithm.ML_DSA_65);
         KeyPair keyPair = keyGen.generateKeyPair();
 
         PublicKey publicKey = keyPair.getPublic();
-        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(keyPair.getPublic())).algorithm(Algorithm.MLDSA65).akp(publicKey);
+        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(keyPair.getPublic())).algorithm(Algorithm.ML_DSA_65).akp(publicKey);
 
         assertEquals("AKP", jwk.getKeyType());
         assertEquals("ML-DSA-65", jwk.getAlgorithm());
@@ -137,8 +137,8 @@ public class ServerJWKTest {
         assertArrayEquals(publicKey.getEncoded(), publicKeyFromJwk.getEncoded());
 
         byte[] data = "Some test string".getBytes(StandardCharsets.UTF_8);
-        byte[] sign = sign(data, JavaAlgorithm.MLDSA65, keyPair.getPrivate());
-        assertTrue(verify(data, sign, JavaAlgorithm.MLDSA65, publicKeyFromJwk));
+        byte[] sign = sign(data, JavaAlgorithm.ML_DSA_65, keyPair.getPrivate());
+        assertTrue(verify(data, sign, JavaAlgorithm.ML_DSA_65, publicKeyFromJwk));
     }
 
     private byte[] sign(byte[] data, String javaAlgorithm, PrivateKey key) throws Exception {

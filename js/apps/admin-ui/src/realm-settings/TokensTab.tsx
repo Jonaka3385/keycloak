@@ -59,8 +59,9 @@ export const RealmSettingsTokensTab = ({
     serverInfo.providers!["signature"].providers,
   );
   // Filter out ML-DSA if feature not enabled
-  const filteredSigAlgOptions = !isFeatureEnabled(Feature.MLDSA)
-    ? defaultSigAlgOptions.filter(alg => !alg.includes("ML-DSA")) : defaultSigAlgOptions;
+  const filteredSigAlgOptions = !isFeatureEnabled(Feature.ML_DSA)
+    ? defaultSigAlgOptions.filter((alg) => !alg.includes("ML-DSA"))
+    : defaultSigAlgOptions;
 
   const { control, register, reset, formState, handleSubmit } =
     useFormContext<RealmRepresentation>();
