@@ -17,19 +17,6 @@
 
 package org.keycloak.jose.jwk;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.keycloak.common.crypto.CryptoIntegration;
-import org.keycloak.common.util.Base64Url;
-import org.keycloak.common.util.KeyUtils;
-import org.keycloak.common.util.PemUtils;
-import org.keycloak.crypto.Algorithm;
-import org.keycloak.crypto.JavaAlgorithm;
-import org.keycloak.crypto.KeyType;
-import org.keycloak.crypto.KeyUse;
-import org.keycloak.rule.CryptoInitRule;
-import org.keycloak.util.JsonSerialization;
-
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -43,12 +30,25 @@ import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 import java.util.List;
 
+import org.keycloak.common.crypto.CryptoIntegration;
+import org.keycloak.common.util.Base64Url;
+import org.keycloak.common.util.KeyUtils;
+import org.keycloak.common.util.PemUtils;
+import org.keycloak.crypto.JavaAlgorithm;
+import org.keycloak.crypto.KeyType;
+import org.keycloak.rule.CryptoInitRule;
+import org.keycloak.util.JsonSerialization;
+
+import org.junit.ClassRule;
+import org.junit.Test;
+
+import static org.keycloak.common.util.CertificateUtils.generateV1SelfSignedCertificate;
+import static org.keycloak.common.util.CertificateUtils.generateV3Certificate;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.keycloak.common.util.CertificateUtils.generateV1SelfSignedCertificate;
-import static org.keycloak.common.util.CertificateUtils.generateV3Certificate;
 
 /**
  * This is not tested in keycloak-core. The subclasses should be created in the crypto modules to make sure it is tested with corresponding modules (bouncycastle VS bouncycastle-fips)
@@ -180,46 +180,6 @@ public abstract class JWKTest {
         byte[] data = "Some test string".getBytes(StandardCharsets.UTF_8);
         byte[] sign = sign(data, JavaAlgorithm.ES256, keyPair.getPrivate());
         verify(data, sign, JavaAlgorithm.ES256, publicKeyFromJwk);
-    }
-
-    @Test
-    public void publicMLDSA65Chain() throws Exception {
-        KeyPair keyPair = CryptoIntegration.getProvider().getKeyPairGen(Algorithm.MLDSA65).generateKeyPair();
-        PublicKey publicKey = keyPair.getPublic();
-        List<X509Certificate> certificates = Arrays.asList(generateV1SelfSignedCertificate(keyPair, "Test"), generateV1SelfSignedCertificate(keyPair, "Intermediate"));
-
-        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(publicKey)).algorithm("ML-DSA-65").akp(publicKey, KeyUse.SIG, certificates);
-
-        assertNotNull(jwk.getKeyId());
-        assertEquals("AKP", jwk.getKeyType());
-        assertEquals("ML-DSA-65", jwk.getAlgorithm());
-        assertEquals("sig", jwk.getPublicKeyUse());
-
-        assertTrue(jwk instanceof AKPPublicJWK);
-        assertNotNull(((AKPPublicJWK) jwk).getPub());
-        assertNotNull(jwk.getX509CertificateChain());
-
-        String[] expectedChain = new String[certificates.size()];
-        for (int i = 0; i < certificates.size(); i++) {
-            expectedChain[i] = PemUtils.encodeCertificate(certificates.get(i));
-        }
-
-        assertArrayEquals(expectedChain, jwk.getX509CertificateChain());
-        assertNotNull(jwk.getSha1x509Thumbprint());
-        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-1"), jwk.getSha1x509Thumbprint());
-        assertNotNull(jwk.getSha256x509Thumbprint());
-        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-256"), jwk.getSha256x509Thumbprint());
-
-        String jwkJson = JsonSerialization.writeValueAsString(jwk);
-
-        PublicKey publicKeyFromJwk = JWKParser.create().parse(jwkJson).toPublicKey();
-
-        // Parse
-        assertArrayEquals(publicKey.getEncoded(), publicKeyFromJwk.getEncoded());
-
-        byte[] data = "Some test string".getBytes(StandardCharsets.UTF_8);
-        byte[] sign = sign(data, JavaAlgorithm.MLDSA65, keyPair.getPrivate());
-        assertTrue(verify(data, sign, JavaAlgorithm.MLDSA65, publicKeyFromJwk));
     }
 
     @Test

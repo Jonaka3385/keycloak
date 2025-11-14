@@ -3,16 +3,18 @@ package org.keycloak.workflow.admin.resource;
 import java.util.List;
 import java.util.Optional;
 
-import com.fasterxml.jackson.jakarta.rs.yaml.YAMLMediaTypes;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
 import org.keycloak.common.Profile;
 import org.keycloak.common.Profile.Feature;
 import org.keycloak.models.KeycloakSession;
@@ -23,6 +25,9 @@ import org.keycloak.representations.workflows.WorkflowRepresentation;
 import org.keycloak.representations.workflows.WorkflowSetRepresentation;
 import org.keycloak.services.ErrorResponse;
 import org.keycloak.services.resources.admin.fgap.AdminPermissionEvaluator;
+
+import com.fasterxml.jackson.jakarta.rs.yaml.YAMLMediaTypes;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 public class WorkflowsResource {
 
@@ -79,9 +84,16 @@ public class WorkflowsResource {
 
     @GET
     @Produces({MediaType.APPLICATION_JSON, YAMLMediaTypes.APPLICATION_JACKSON_YAML})
-    public List<WorkflowRepresentation> list() {
+    public List<WorkflowRepresentation> list(
+            @Parameter(description = "A String representing the workflow name - either partial or exact") @QueryParam("search") String search,
+            @Parameter(description = "Boolean which defines whether the param 'search' must match exactly or not") @QueryParam("exact") Boolean exact,
+            @Parameter(description = "The position of the first result to be processed (pagination offset)") @QueryParam("first") @DefaultValue("0") Integer firstResult,
+            @Parameter(description = "The maximum number of results to be returned - defaults to 10") @QueryParam("max") @DefaultValue("10") Integer maxResults
+    ) {
         auth.realm().requireManageRealm();
 
-        return provider.getWorkflows().map(provider::toRepresentation).toList();
+        int first = Optional.ofNullable(firstResult).orElse(0);
+        int max = Optional.ofNullable(maxResults).orElse(10);
+        return provider.getWorkflows(search, exact, first, max).map(provider::toRepresentation).toList();
     }
 }
