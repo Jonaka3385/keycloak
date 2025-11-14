@@ -1,7 +1,5 @@
 package org.keycloak.jose.jwk;
 
-import org.keycloak.crypto.Algorithm;
-
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.EncodedKeySpec;
@@ -9,6 +7,8 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.keycloak.crypto.Algorithm;
 
 /**
  * Adds and removes prefix to X.509 DER encoded public keys.
