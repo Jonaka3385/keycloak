@@ -113,11 +113,11 @@ public class ServerJWKTest {
 
     @Test
     public void publicMLDSA65() throws Exception {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(Algorithm.MLDSA65);
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(Algorithm.ML_DSA_65);
         KeyPair keyPair = keyGen.generateKeyPair();
 
         PublicKey publicKey = keyPair.getPublic();
-        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(keyPair.getPublic())).algorithm(Algorithm.MLDSA65).akp(publicKey);
+        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(keyPair.getPublic())).algorithm(Algorithm.ML_DSA_65).akp(publicKey);
 
         assertEquals("AKP", jwk.getKeyType());
         assertEquals("ML-DSA-65", jwk.getAlgorithm());

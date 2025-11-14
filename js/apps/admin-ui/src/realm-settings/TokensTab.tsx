@@ -58,6 +58,10 @@ export const RealmSettingsTokensTab = ({
   const defaultSigAlgOptions = sortProviders(
     serverInfo.providers!["signature"].providers,
   );
+  // Filter out ML-DSA if feature not enabled
+  const filteredSigAlgOptions = !isFeatureEnabled(Feature.ML_DSA)
+    ? defaultSigAlgOptions.filter((alg) => !alg.includes("ML-DSA"))
+    : defaultSigAlgOptions;
 
   const { control, register, reset, formState, handleSubmit } =
     useFormContext<RealmRepresentation>();
@@ -124,7 +128,7 @@ export const RealmSettingsTokensTab = ({
                   isOpen={defaultSigAlgDrpdwnIsOpen}
                   data-testid="select-default-sig-alg"
                 >
-                  {defaultSigAlgOptions!.map((p, idx) => (
+                  {filteredSigAlgOptions!.map((p, idx) => (
                     <SelectOption
                       selected={p === field.value}
                       key={`default-sig-alg-${idx}`}

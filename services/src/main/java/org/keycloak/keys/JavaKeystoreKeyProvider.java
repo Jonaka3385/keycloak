@@ -105,7 +105,7 @@ public class JavaKeystoreKeyProvider implements KeyProvider {
                     loadECKey(keyStore, keyAlias, KeyUse.ENC);
                 case Algorithm.EdDSA ->
                     loadEdDSAKey(keyStore, keyAlias, KeyUse.SIG);
-                case Algorithm.MLDSA44, Algorithm.MLDSA65, Algorithm.MLDSA87 ->
+                case Algorithm.ML_DSA_44, Algorithm.ML_DSA_65, Algorithm.ML_DSA_87 ->
                         loadMLDSAKey(keyStore, keyAlias, KeyUse.SIG, algorithm);
                 case Algorithm.AES ->
                     loadOctKey(keyStore, keyAlias, JavaAlgorithm.getJavaAlgorithm(algorithm), KeyUse.ENC);

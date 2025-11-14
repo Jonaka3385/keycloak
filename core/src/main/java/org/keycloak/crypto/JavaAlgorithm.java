@@ -75,11 +75,11 @@ public class JavaAlgorithm {
                 return PS384;
             case Algorithm.PS512:
                 return PS512;
-            case Algorithm.MLDSA44:
+            case Algorithm.ML_DSA_44:
                 return ML_DSA_44;
-            case Algorithm.MLDSA65:
+            case Algorithm.ML_DSA_65:
                 return ML_DSA_65;
-            case Algorithm.MLDSA87:
+            case Algorithm.ML_DSA_87:
                 return ML_DSA_87;
             case Algorithm.EdDSA:
                 if (curve != null) {
@@ -157,9 +157,9 @@ public class JavaAlgorithm {
             case Algorithm.Ed448:
             case Algorithm.Ed25519:
                 return KeyType.OKP;
-            case Algorithm.MLDSA44:
-            case Algorithm.MLDSA65:
-            case Algorithm.MLDSA87:
+            case Algorithm.ML_DSA_44:
+            case Algorithm.ML_DSA_65:
+            case Algorithm.ML_DSA_87:
                 return KeyType.AKP;
             default:
                 return KeyType.OCT;
