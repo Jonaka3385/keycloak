@@ -49,7 +49,7 @@ public class ClientAuthMLDSASignedJWTTest extends AbstractClientAuthSignedJWTTes
         if (!JavaAlgorithm.isMldsaJavaAlgorithm(jwaAlgorithm)) {
             throw new RuntimeException("Unsupported signature algorithm: " + jwaAlgorithm);
         }
-        if (curve != null && !curve.isEmpty()) {
+        if ( !(curve == null || curve.isEmpty()) ) {
             throw new RuntimeException("Unsupported signature curve: " + curve);
         }
         return jwaAlgorithm;

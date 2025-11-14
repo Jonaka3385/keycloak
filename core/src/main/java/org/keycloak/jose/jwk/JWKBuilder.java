@@ -24,8 +24,10 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
@@ -176,14 +178,16 @@ public class JWKBuilder {
 
     public JWK akp(Key key, KeyUse keyUse) {
         AKPPublicJWK k = new AKPPublicJWK();
-        byte[] encodedKey = key.getEncoded();
-        String keyString = Base64Url.encode(encodedKey);
+        byte[] x509Encoded = key.getEncoded();
+        SubjectPublicKeyInfo spki = SubjectPublicKeyInfo.getInstance(x509Encoded);
+        byte[] rawPublicKeyBytes = spki.getPublicKeyData().getBytes();
+        String jwk_pub_key = Base64.getUrlEncoder().withoutPadding().encodeToString(rawPublicKeyBytes);
 
         k.setKeyId(kid);
         k.setKeyType(KeyType.AKP);
         k.setAlgorithm(algorithm);
         k.setPublicKeyUse(keyUse == null ? DEFAULT_PUBLIC_KEY_USE.getSpecName() : keyUse.getSpecName());
-        k.setPub(keyString);
+        k.setPub(jwk_pub_key);
 
         return k;
     }

@@ -16,8 +16,11 @@
  */
 package org.keycloak.keys;
 
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.jboss.logging.Logger;
-import org.keycloak.common.util.Base64;
+import java.util.Base64;
 import org.keycloak.common.util.MultivaluedHashMap;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.component.ComponentValidationException;
@@ -101,8 +104,20 @@ public class GeneratedMldsaKeyProviderFactory extends AbstractMldsaKeyProviderFa
         }
         try {
             keyPair = generateMldsaKeyPair(algorithm);
-            model.put(MLDSA_PRIVATE_KEY_KEY, Base64.encodeBytes(keyPair.getPrivate().getEncoded()));
-            model.put(MLDSA_PUBLIC_KEY_KEY, Base64.encodeBytes(keyPair.getPublic().getEncoded()));
+
+            byte[] x509Encoded = keyPair.getPublic().getEncoded();
+            SubjectPublicKeyInfo spki = SubjectPublicKeyInfo.getInstance(x509Encoded);
+            byte[] rawPublicKeyBytes = spki.getPublicKeyData().getBytes();
+            String jwkPubKey = Base64.getUrlEncoder().withoutPadding().encodeToString(rawPublicKeyBytes);
+
+            byte[] pkcs8Encoded = keyPair.getPrivate().getEncoded();
+            PrivateKeyInfo pki = PrivateKeyInfo.getInstance(pkcs8Encoded);
+            ASN1Encodable privateKeyParsable = pki.parsePrivateKey();
+            byte[] rawPrivateKeyBytes = privateKeyParsable.toASN1Primitive().getEncoded();
+            String jwkPrivKey = Base64.getUrlEncoder().withoutPadding().encodeToString(rawPrivateKeyBytes);
+
+            model.put(MLDSA_PRIVATE_KEY_KEY, jwkPrivKey);
+            model.put(MLDSA_PUBLIC_KEY_KEY, jwkPubKey);
         } catch (Throwable t) {
             throw new ComponentValidationException("Failed to generate ML-DSA keys", t);
         }

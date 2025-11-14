@@ -16,8 +16,14 @@
  */
 package org.keycloak.keys;
 
+import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.jboss.logging.Logger;
-import org.keycloak.common.util.Base64;
+import java.util.Base64;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.models.RealmModel;
@@ -41,20 +47,36 @@ public class GeneratedMldsaKeyProvider extends AbstractMldsaKeyProvider {
         String privateMldsaKeyBase64Encoded = model.getConfig().getFirst(GeneratedMldsaKeyProviderFactory.MLDSA_PRIVATE_KEY_KEY);
         String publicMldsaKeyBase64Encoded = model.getConfig().getFirst(GeneratedMldsaKeyProviderFactory.MLDSA_PUBLIC_KEY_KEY);
 
+        byte[] rawPublicKeyBytes = Base64.getUrlDecoder().decode(publicMldsaKeyBase64Encoded);
+        byte[] rawPrivateKeyBytes = Base64.getUrlDecoder().decode(privateMldsaKeyBase64Encoded);
+        AlgorithmIdentifier algId = oid();
+
         try {
-            PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(Base64.decode(privateMldsaKeyBase64Encoded));
             KeyFactory kf = KeyFactory.getInstance(algorithm);
-            PrivateKey decodedPrivateKey = kf.generatePrivate(privateKeySpec);
 
-            X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.decode(publicMldsaKeyBase64Encoded));
-            PublicKey decodedPublicKey = kf.generatePublic(publicKeySpec);
+            SubjectPublicKeyInfo spki = new SubjectPublicKeyInfo(algId, rawPublicKeyBytes);
+            PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(spki.getEncoded()));
+            System.out.println("Public Key created");
 
-            KeyPair keyPair = new KeyPair(decodedPublicKey, decodedPrivateKey);
+            // TODO private key encoding to be changed in future releases
+            ASN1OctetString privateKeyOctetString = new DEROctetString(rawPrivateKeyBytes);
+            PrivateKeyInfo pki = new PrivateKeyInfo(algId, privateKeyOctetString);
+            PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(pki.getEncoded()));
 
+            KeyPair keyPair = new KeyPair(publicKey, privateKey);
             return createKeyWrapper(keyPair);
         } catch (Exception e) {
             logger.warnf("Exception at decodeMldsaPublicKey. %s", e.toString());
             return null;
         }
+    }
+
+    private AlgorithmIdentifier oid(){
+        return switch (algorithm) {
+            case "ML-DSA-44" -> new AlgorithmIdentifier(NISTObjectIdentifiers.id_ml_dsa_44);
+            case "ML-DSA-65" -> new AlgorithmIdentifier(NISTObjectIdentifiers.id_ml_dsa_65);
+            case "ML-DSA-87" -> new AlgorithmIdentifier(NISTObjectIdentifiers.id_ml_dsa_87);
+            default -> throw new IllegalArgumentException("Invalid algorithm: " + algorithm);
+        };
     }
 }
