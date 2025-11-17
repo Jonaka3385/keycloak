@@ -283,10 +283,6 @@
         	<groupId>org.keycloak</groupId>
         	<artifactId>keycloak-config-api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-        </dependency>
     </dependencies>
     <build>
         <plugins>

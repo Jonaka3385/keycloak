@@ -40,7 +40,6 @@ public class JavaAlgorithm {
     public static final String SHA512 = "SHA-512";
     public static final String SHAKE256 = "SHAKE256";
 
-    /* ML-DSA */
     public static final String ML_DSA_44 = "ML-DSA-44";
     public static final String ML_DSA_65 = "ML-DSA-65";
     public static final String ML_DSA_87 = "ML-DSA-87";
@@ -135,10 +134,6 @@ public class JavaAlgorithm {
                     }
                 }
                 return SHA512;
-            case ML_DSA_44:
-            case ML_DSA_65:
-            case ML_DSA_87:
-                return SHAKE256;
             case Algorithm.AES:
                 return AES;
             default:
