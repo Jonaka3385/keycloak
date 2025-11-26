@@ -8,10 +8,13 @@ import {
 } from "@patternfly/react-core";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { FormErrorText, PasswordInput } from "@keycloak/keycloak-ui-shared";
+import {
+  FormErrorText,
+  PasswordInput,
+  useAlerts,
+} from "@keycloak/keycloak-ui-shared";
 import { useAdminClient } from "../../admin-client";
 import { DefaultSwitchControl } from "../../components/SwitchControl";
-import { useAlerts } from "@keycloak/keycloak-ui-shared";
 import {
   ConfirmDialogModal,
   useConfirmDialog,
@@ -159,7 +162,10 @@ export const ResetPasswordDialog = ({
               id="password"
               onChange={async (e) => {
                 await onChange(e);
-                if (passwordConfirmation !== e.currentTarget.value) {
+                if (
+                  e.currentTarget &&
+                  passwordConfirmation !== e.currentTarget.value
+                ) {
                   setError("passwordConfirmation", {
                     message: t("confirmPasswordDoesNotMatch"),
                   });

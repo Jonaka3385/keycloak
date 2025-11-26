@@ -1,10 +1,10 @@
 import {
   ActionGroup,
+  AlertVariant,
   Button,
   FormGroup,
   PageSection,
 } from "@patternfly/react-core";
-import { AlertVariant } from "@patternfly/react-core";
 import {
   Controller,
   FormProvider,
@@ -16,8 +16,8 @@ import { Link, useNavigate } from "react-router-dom";
 import yaml from "yaml";
 import { useAdminClient } from "../admin-client";
 import {
-  HelpItem,
   FormSubmitButton,
+  HelpItem,
   useAlerts,
   useFetch,
 } from "@keycloak/keycloak-ui-shared";
@@ -27,8 +27,8 @@ import { toWorkflows } from "./routes/Workflows";
 import CodeEditor from "../components/form/CodeEditor";
 import { useParams } from "../utils/useParams";
 import {
-  WorkflowDetailParams,
   toWorkflowDetail,
+  WorkflowDetailParams,
 } from "./routes/WorkflowDetail";
 import { ViewHeader } from "../components/view-header/ViewHeader";
 import WorkflowRepresentation from "libs/keycloak-admin-client/lib/defs/workflowRepresentation";
@@ -60,6 +60,7 @@ export default function WorkflowDetailForm() {
       }
       return adminClient.workflows.findOne({
         id: id!,
+        includeId: false,
       });
     },
     (workflow) => {

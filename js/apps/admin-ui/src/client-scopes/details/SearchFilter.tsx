@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Dropdown,
@@ -18,10 +18,11 @@ import {
   clientScopeTypesSelectOptions,
 } from "../../components/client-scope/ClientScopeTypes";
 import type { Row } from "../../clients/scopes/ClientScopes";
+import useIsFeatureEnabled, { Feature } from "../../utils/useIsFeatureEnabled";
 
 export type SearchType = "name" | "type" | "protocol";
 export const PROTOCOLS = ["all", "saml", "openid-connect"] as const;
-export type ProtocolType = (typeof PROTOCOLS)[number];
+export type ProtocolType = (typeof PROTOCOLS)[number] | "oid4vc";
 
 export const nameFilter =
   (search = "") =>
@@ -100,6 +101,14 @@ export const SearchToolbar = ({
 }: SearchToolbarProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const isFeatureEnabled = useIsFeatureEnabled();
+  const protocols = useMemo<readonly ProtocolType[]>(
+    () =>
+      isFeatureEnabled(Feature.OpenId4VCI)
+        ? ([...PROTOCOLS, "oid4vc"] as const)
+        : PROTOCOLS,
+    [isFeatureEnabled],
+  );
 
   return (
     <>
@@ -178,7 +187,7 @@ export const SearchToolbar = ({
               }}
             >
               <SelectList>
-                {PROTOCOLS.map((type) => (
+                {protocols.map((type) => (
                   <SelectOption key={type} value={type}>
                     {t(`protocolTypes.${type}`)}
                   </SelectOption>

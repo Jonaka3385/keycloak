@@ -42,6 +42,7 @@ import org.keycloak.models.workflow.DeleteUserStepProviderFactory;
 import org.keycloak.models.workflow.DisableUserStepProviderFactory;
 import org.keycloak.models.workflow.NotifyUserStepProviderFactory;
 import org.keycloak.models.workflow.ResourceOperationType;
+import org.keycloak.models.workflow.ResourceType;
 import org.keycloak.models.workflow.RestartWorkflowStepProviderFactory;
 import org.keycloak.models.workflow.SetUserAttributeStepProviderFactory;
 import org.keycloak.models.workflow.Workflow;
@@ -50,19 +51,24 @@ import org.keycloak.models.workflow.WorkflowStateProvider;
 import org.keycloak.models.workflow.WorkflowStateProvider.ScheduledStep;
 import org.keycloak.models.workflow.WorkflowStep;
 import org.keycloak.models.workflow.conditions.IdentityProviderWorkflowConditionFactory;
+import org.keycloak.models.workflow.conditions.RoleWorkflowConditionFactory;
 import org.keycloak.representations.idm.ErrorRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.representations.workflows.WorkflowRepresentation;
-import org.keycloak.representations.workflows.WorkflowSetRepresentation;
 import org.keycloak.representations.workflows.WorkflowStepRepresentation;
 import org.keycloak.testframework.annotations.InjectAdminClient;
 import org.keycloak.testframework.annotations.InjectKeycloakUrls;
+import org.keycloak.testframework.annotations.InjectUser;
 import org.keycloak.testframework.annotations.KeycloakIntegrationTest;
+import org.keycloak.testframework.injection.LifeCycle;
 import org.keycloak.testframework.mail.MailServer;
 import org.keycloak.testframework.mail.annotations.InjectMailServer;
+import org.keycloak.testframework.realm.ManagedUser;
+import org.keycloak.testframework.realm.UserConfig;
 import org.keycloak.testframework.realm.UserConfigBuilder;
 import org.keycloak.testframework.remote.providers.runonserver.RunOnServer;
 import org.keycloak.testframework.server.KeycloakUrls;
+import org.keycloak.testframework.util.ApiUtil;
 import org.keycloak.tests.utils.MailUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -77,7 +83,9 @@ import org.junit.jupiter.api.Test;
 import static org.keycloak.models.workflow.ResourceOperationType.USER_ADDED;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -90,6 +98,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @KeycloakIntegrationTest(config = WorkflowsBlockingServerConfig.class)
 public class WorkflowManagementTest extends AbstractWorkflowTest {
 
+    @InjectUser(ref = "alice", config = DefaultUserConfig.class, lifecycle = LifeCycle.METHOD, realmRef = DEFAULT_REALM_NAME)
+    private ManagedUser userAlice;
+
     @InjectMailServer
     private MailServer mailServer;
 
@@ -99,9 +110,32 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
     @InjectAdminClient(ref = "managed", realmRef = "managedRealm")
     Keycloak adminClient;
 
+    public static void verifyEmailContent(MimeMessage message, String expectedRecipient, String subjectContains,
+                                          String... contentContains) {
+        try {
+            assertEquals(expectedRecipient, MailUtils.getRecipient(message));
+            assertThat(message.getSubject(), Matchers.containsString(subjectContains));
+
+            MailUtils.EmailBody body = MailUtils.getBody(message);
+            String textContent = body.getText();
+            String htmlContent = body.getHtml();
+
+            for (String expectedContent : contentContains) {
+                boolean foundInText = textContent.contains(expectedContent);
+                boolean foundInHtml = htmlContent.contains(expectedContent);
+                assertTrue(foundInText || foundInHtml,
+                        "Email content should contain: " + expectedContent +
+                                "\nText: " + textContent +
+                                "\nHTML: " + htmlContent);
+            }
+        } catch (MessagingException | IOException e) {
+            Assertions.fail("Failed to read email message: " + e.getMessage());
+        }
+    }
+
     @Test
     public void testCreate() {
-        WorkflowSetRepresentation expectedWorkflows = WorkflowRepresentation.withName("myworkflow")
+        WorkflowRepresentation expectedWorkflow = WorkflowRepresentation.withName("myworkflow")
                 .onEvent(USER_ADDED.name())
                 .withSteps(
                         WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
@@ -114,14 +148,14 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
 
         WorkflowsResource workflows = managedRealm.admin().workflows();
 
-        try (Response response = workflows.create(expectedWorkflows)) {
+        try (Response response = workflows.create(expectedWorkflow)) {
             assertThat(response.getStatus(), is(Response.Status.CREATED.getStatusCode()));
         }
 
         List<WorkflowRepresentation> actualWorkflows = workflows.list();
-        assertThat(actualWorkflows, Matchers.hasSize(1));
+        assertThat(actualWorkflows, hasSize(1));
 
-        assertThat(actualWorkflows.get(0).getSteps(), Matchers.hasSize(2));
+        assertThat(actualWorkflows.get(0).getSteps(), hasSize(2));
         assertThat(actualWorkflows.get(0).getSteps().get(0).getUses(), is(NotifyUserStepProviderFactory.ID));
         assertThat(actualWorkflows.get(0).getSteps().get(1).getUses(), is(DisableUserStepProviderFactory.ID));
         assertThat(actualWorkflows.get(0).getState(), is(nullValue()));
@@ -129,7 +163,7 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
 
     @Test
     public void testCreateWithNoConditions() {
-        WorkflowSetRepresentation expectedWorkflows = WorkflowRepresentation.withName("myworkflow")
+        WorkflowRepresentation expectedWorkflow = WorkflowRepresentation.withName("myworkflow")
                 .withSteps(
                         WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
                                 .after(Duration.ofDays(5))
@@ -139,16 +173,16 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
                                 .build()
                 ).build();
 
-        expectedWorkflows.getWorkflows().get(0).setConditions(null);
+        expectedWorkflow.setConditions(null);
 
-        try (Response response = managedRealm.admin().workflows().create(expectedWorkflows)) {
+        try (Response response = managedRealm.admin().workflows().create(expectedWorkflow)) {
             assertThat(response.getStatus(), is(Response.Status.CREATED.getStatusCode()));
         }
     }
 
     @Test
     public void testCreateWithNoWorkflowSetDefaultWorkflow() {
-        WorkflowSetRepresentation expectedWorkflows = WorkflowRepresentation.withName("default-workflow")
+        WorkflowRepresentation expectedWorkflow = WorkflowRepresentation.withName("default-workflow")
                 .withSteps(
                         WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
                                 .after(Duration.ofDays(5))
@@ -158,9 +192,9 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
                                 .build()
                 ).build();
 
-        expectedWorkflows.getWorkflows().get(0).setConditions(null);
+        expectedWorkflow.setConditions(null);
 
-        try (Response response = managedRealm.admin().workflows().create(expectedWorkflows)) {
+        try (Response response = managedRealm.admin().workflows().create(expectedWorkflow)) {
             assertThat(response.getStatus(), is(Response.Status.CREATED.getStatusCode()));
         }
 
@@ -171,16 +205,20 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
     public void testDelete() {
         WorkflowsResource workflows = managedRealm.admin().workflows();
 
-        workflows.create(WorkflowRepresentation.withName("myworkflow")
+        String workflowId;
+        try (Response response = workflows.create(WorkflowRepresentation.withName("myworkflow")
                 .onEvent(ResourceOperationType.USER_ADDED.toString())
                 .withSteps(
                         WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
                                 .after(Duration.ofDays(5))
                                 .build(),
                         WorkflowStepRepresentation.create().of(RestartWorkflowStepProviderFactory.ID)
-                                .build()
-                )
-                .withName("another-workflow")
+                                .build())
+                .build())) {
+            workflowId = ApiUtil.getCreatedId(response);
+        }
+
+        workflows.create(WorkflowRepresentation.withName("another-workflow")
                 .onEvent(ResourceOperationType.USER_LOGGED_IN.toString())
                 .withSteps(
                         WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
@@ -194,14 +232,11 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
         managedRealm.admin().users().create(UserConfigBuilder.create().username("testuser").email("testuser@example.com").build()).close();
 
         List<WorkflowRepresentation> actualWorkflows = workflows.list();
-        assertThat(actualWorkflows, Matchers.hasSize(2));
+        assertThat(actualWorkflows, hasSize(2));
 
-        WorkflowRepresentation workflow = actualWorkflows.stream().filter(p -> "myworkflow".equals(p.getName())).findAny().orElse(null);
-        assertThat(workflow, notNullValue());
-        String id = workflow.getId();
-        workflows.workflow(id).delete().close();
+        workflows.workflow(workflowId).delete().close();
         actualWorkflows = workflows.list();
-        assertThat(actualWorkflows, Matchers.hasSize(1));
+        assertThat(actualWorkflows, hasSize(1));
 
         runOnServer.run((RunOnServer) session -> {
             WorkflowProvider provider = session.getProvider(WorkflowProvider.class);
@@ -209,14 +244,14 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
             List<Workflow> registeredWorkflows = provider.getWorkflows().toList();
             assertEquals(1, registeredWorkflows.size());
             WorkflowStateProvider stateProvider = session.getKeycloakSessionFactory().getProviderFactory(WorkflowStateProvider.class).create(session);
-            List<ScheduledStep> steps = stateProvider.getScheduledStepsByWorkflow(id);
+            List<ScheduledStep> steps = stateProvider.getScheduledStepsByWorkflow(workflowId);
             assertTrue(steps.isEmpty());
         });
     }
 
     @Test
-    public void testUpdate() {
-        WorkflowSetRepresentation expectedWorkflows = WorkflowRepresentation.withName("test-workflow")
+    public void testUpdateWorkflowWithNoScheduledSteps() {
+        WorkflowRepresentation workflowRep = WorkflowRepresentation.withName("test-workflow")
                 .withSteps(
                         WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
                                 .after(Duration.ofDays(5))
@@ -228,41 +263,157 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
 
         WorkflowsResource workflows = managedRealm.admin().workflows();
 
-        try (Response response = workflows.create(expectedWorkflows)) {
+        String workflowId;
+        try (Response response = workflows.create(workflowRep)) {
             assertThat(response.getStatus(), is(Response.Status.CREATED.getStatusCode()));
+            workflowId = ApiUtil.getCreatedId(response);
         }
 
         List<WorkflowRepresentation> actualWorkflows = workflows.list();
-        assertThat(actualWorkflows, Matchers.hasSize(1));
+        assertThat(actualWorkflows, hasSize(1));
         WorkflowRepresentation workflow = actualWorkflows.get(0);
         assertThat(workflow.getName(), is("test-workflow"));
 
+        // while the workflow has no scheduled steps - i.e. no resource is currently going through the workflow - we can update any property
         workflow.setName("changed");
-        managedRealm.admin().workflows().workflow(workflow.getId()).update(workflow).close();
-        actualWorkflows = workflows.list();
-        workflow = actualWorkflows.get(0);
-        assertThat(workflow.getName(), is("changed"));
-
-        // now let's try to update another property that we can't update
-        String previousOn = workflow.getOn();
-        workflow.setOn(ResourceOperationType.USER_LOGGED_IN.toString());
-        try (Response response = workflows.workflow(workflow.getId()).update(workflow)) {
-            assertThat(response.getStatus(), is(Response.Status.BAD_REQUEST.getStatusCode()));
-        }
-
-        // restore previous value, but change the conditions
-        workflow.setOn(previousOn);
         workflow.setConditions(IdentityProviderWorkflowConditionFactory.ID + "(someidp)");
+        workflow.setOn("user-logged-in");
+
+        managedRealm.admin().workflows().workflow(workflow.getId()).update(workflow).close();
+        workflow = workflows.workflow(workflow.getId()).toRepresentation();
+        assertThat(workflow.getName(), is("changed"));
+        assertThat(workflow.getOn(), is("user-logged-in"));
+        assertThat(workflow.getConditions(), is(IdentityProviderWorkflowConditionFactory.ID + "(someidp)"));
+
+        // even adding or removing steps should be allowed
+        WorkflowStepRepresentation newStep = WorkflowStepRepresentation.create().of(DeleteUserStepProviderFactory.ID)
+                .after(Duration.ofDays(10))
+                .build();
+        workflow.getSteps().remove(1); // remove the disable step
+        workflow.getSteps().get(0).getConfig().putSingle("custom_message", "Your account will be disabled"); // change the notify step config
+        workflow.getSteps().add(newStep);  // add a new delete step
+
+        managedRealm.admin().workflows().workflow(workflow.getId()).update(workflow).close();
+        workflow = workflows.workflow(workflow.getId()).toRepresentation();
+        assertThat(workflow.getSteps(), hasSize(2));
+        assertThat(workflow.getSteps().get(0).getUses(), is(NotifyUserStepProviderFactory.ID));
+        assertThat(workflow.getSteps().get(0).getConfig().getFirst("custom_message"), is("Your account will be disabled"));
+        assertThat(workflow.getSteps().get(1).getUses(), is(DeleteUserStepProviderFactory.ID));
+    }
+
+    @Test
+    public void testUpdateWorkflowWithScheduledSteps() {
+        WorkflowRepresentation expectedWorkflows = WorkflowRepresentation.withName("test-workflow")
+                .withSteps(
+                        WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
+                                .after(Duration.ofDays(5))
+                                .build(),
+                        WorkflowStepRepresentation.create().of(DisableUserStepProviderFactory.ID)
+                                .after(Duration.ofDays(10))
+                                .build()
+                ).build();
+
+        WorkflowsResource workflows = managedRealm.admin().workflows();
+
+        String workflowId;
+        try (Response response = workflows.create(expectedWorkflows)) {
+            assertThat(response.getStatus(), is(Response.Status.CREATED.getStatusCode()));
+            workflowId = ApiUtil.getCreatedId(response);
+        }
+
+        // bind the workflow to a resource, so it schedules the first step
+        managedRealm.admin().workflows().workflow(workflowId).activate(ResourceType.USERS.name(), userAlice.getId());
+
+        // when a scheduled step exists, we cannot change the 'on' event, nor the number or order of steps. Individual step config can still be updated, except for the 'uses'.
+        WorkflowRepresentation workflow = managedRealm.admin().workflows().workflow(workflowId).toRepresentation();
+        workflow.setName("changed");
+        workflow.setConditions(IdentityProviderWorkflowConditionFactory.ID + "(someidp)");
+        workflow.getSteps().get(0).getConfig().putSingle("custom_message", "Your account will be disabled"); // modify one of the steps config
+
+        managedRealm.admin().workflows().workflow(workflow.getId()).update(workflow).close();
+        workflow = workflows.workflow(workflow.getId()).toRepresentation();
+        assertThat(workflow.getName(), is("changed"));
+        assertThat(workflow.getConditions(), is(IdentityProviderWorkflowConditionFactory.ID + "(someidp)"));
+        assertThat(workflow.getSteps().get(0).getConfig().getFirst("custom_message"), is("Your account will be disabled"));
+
+        // now let's try to update the 'on' event - should fail
+        workflow.setOn("user-logged-in");
         try (Response response = workflows.workflow(workflow.getId()).update(workflow)) {
             assertThat(response.getStatus(), is(Response.Status.BAD_REQUEST.getStatusCode()));
         }
 
-        // revert conditions, but change one of the steps
-        workflow.setConditions(null);
-        workflow.getSteps().get(0).setAfter("8D"); // 8 days
+        // restore the 'on' value, but try removing a step
+        workflow.setOn(null);
+        WorkflowStepRepresentation removedStep = workflow.getSteps().remove(1); // remove disable step
         try (Response response = workflows.workflow(workflow.getId()).update(workflow)) {
             assertThat(response.getStatus(), is(Response.Status.BAD_REQUEST.getStatusCode()));
         }
+
+        // restore the step, but invert the order of the steps
+        workflow.getSteps().add(0, removedStep);
+        try (Response response = workflows.workflow(workflow.getId()).update(workflow)) {
+            assertThat(response.getStatus(), is(Response.Status.BAD_REQUEST.getStatusCode()));
+        }
+
+        // restore the original order, but try changing the 'uses' of one step (i.e. replace it with something else)
+        workflow.getSteps().remove(0); // this will put notify back as the first step.
+        WorkflowStepRepresentation newStep = WorkflowStepRepresentation.create().of(DeleteUserStepProviderFactory.ID)
+                .after(Duration.ofDays(10))
+                .build();
+        workflow.getSteps().add(newStep); // we've added a delete step in the place of the disable step, with same config
+        try (Response response = workflows.workflow(workflow.getId()).update(workflow)) {
+            assertThat(response.getStatus(), is(Response.Status.BAD_REQUEST.getStatusCode()));
+        }
+    }
+
+    @Test
+    public void testUpdateWorkflowConditionsCancelsExecutionForAffectedResources() {
+        WorkflowRepresentation expectedWorkflows = WorkflowRepresentation.withName("test-workflow")
+                .withSteps(
+                        WorkflowStepRepresentation.create().of(DisableUserStepProviderFactory.ID)
+                                .after(Duration.ofDays(5))
+                                .build()
+                ).build();
+
+        WorkflowsResource workflows = managedRealm.admin().workflows();
+
+        String workflowId;
+        try (Response response = workflows.create(expectedWorkflows)) {
+            assertThat(response.getStatus(), is(Response.Status.CREATED.getStatusCode()));
+            workflowId = ApiUtil.getCreatedId(response);
+        }
+
+        // bind the workflow to a resource, so it schedules the first step
+        managedRealm.admin().workflows().workflow(workflowId).activate(ResourceType.USERS.name(), userAlice.getId());
+
+        // check step has been scheduled for the user
+        runOnServer.run((RunOnServer) session -> {
+            RealmModel realm = session.getContext().getRealm();
+            UserModel user = session.users().getUserByUsername(realm, "alice");
+
+            WorkflowStateProvider stateProvider = session.getProvider(WorkflowStateProvider.class);
+            List<ScheduledStep> scheduledSteps = stateProvider.getScheduledStepsByResource(user.getId());
+            assertThat("A step should have been scheduled for the user " + user.getUsername(), scheduledSteps, hasSize(1));
+        });
+
+        // now update the workflow to add a condition that will make the user no longer eligible
+        WorkflowRepresentation workflow = managedRealm.admin().workflows().workflow(workflowId).toRepresentation();
+        workflow.setConditions(RoleWorkflowConditionFactory.ID + "(realm-management/realm-admin)");
+        managedRealm.admin().workflows().workflow(workflowId).update(workflow).close();
+
+        // simulate running the step - user should no longer be eligible, so the step should be cancelled
+        runScheduledSteps(Duration.ofDays(6));
+
+        // check the user is still enabled and no scheduled steps exist
+        runOnServer.run((RunOnServer) session -> {
+            RealmModel realm = session.getContext().getRealm();
+            UserModel user = session.users().getUserByUsername(realm, "alice");
+            assertThat(user.isEnabled(), is(true));
+
+            WorkflowStateProvider stateProvider = session.getProvider(WorkflowStateProvider.class);
+            List<ScheduledStep> scheduledSteps = stateProvider.getScheduledStepsByResource(user.getId());
+            assertThat(scheduledSteps, empty());
+        });
 
     }
 
@@ -282,96 +433,28 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
 
         // use the API to search for workflows by name, both partial and exact matches
         WorkflowsResource workflows = managedRealm.admin().workflows();
-        List<WorkflowRepresentation> representations =  workflows.list("alpha", false, null, null);
-        assertThat(representations, Matchers.hasSize(1));
+        List<WorkflowRepresentation> representations = workflows.list("alpha", false, null, null);
+        assertThat(representations, hasSize(1));
         assertThat(representations.get(0).getName(), is("alpha-workflow"));
 
-        representations =  workflows.list("workflow", false, null, null);
-        assertThat(representations, Matchers.hasSize(4));
-        representations =  workflows.list("beta-workflow", true, null, null);
-        assertThat(representations, Matchers.hasSize(1));
+        representations = workflows.list("workflow", false, null, null);
+        assertThat(representations, hasSize(4));
+        representations = workflows.list("beta-workflow", true, null, null);
+        assertThat(representations, hasSize(1));
         assertThat(representations.get(0).getName(), is("beta-workflow"));
-        representations =  workflows.list("nonexistent", false, null, null);
-        assertThat(representations, Matchers.hasSize(0));
+        representations = workflows.list("nonexistent", false, null, null);
+        assertThat(representations, hasSize(0));
 
         // test pagination parameters
-        representations =  workflows.list(null, null, 1, 2);
-        assertThat(representations, Matchers.hasSize(2));
+        representations = workflows.list(null, null, 1, 2);
+        assertThat(representations, hasSize(2));
         // returned workflows should be ordered by name
         assertThat(representations.get(0).getName(), is("beta-workflow"));
         assertThat(representations.get(1).getName(), is("delta-workflow"));
 
-        representations =  workflows.list("gamma", false, 0, 10);
-        assertThat(representations, Matchers.hasSize(1));
+        representations = workflows.list("gamma", false, 0, 10);
+        assertThat(representations, hasSize(1));
         assertThat(representations.get(0).getName(), is("gamma-workflow"));
-    }
-
-
-    @Test
-    public void testWorkflowDoesNotFallThroughStepsInSingleRun() {
-        managedRealm.admin().workflows().create(WorkflowRepresentation.withName("myworkflow")
-                .onEvent(ResourceOperationType.USER_ADDED.toString())
-                .withSteps(
-                        WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
-                                .after(Duration.ofDays(5))
-                                .build(),
-                        WorkflowStepRepresentation.create().of(DisableUserStepProviderFactory.ID)
-                                .after(Duration.ofDays(10))
-                                .build()
-                ).build()).close();
-
-        // create a new user - should bind the user to the workflow and setup the first step
-        managedRealm.admin().users().create(UserConfigBuilder.create().username("testuser").email("testuser@example.com").build()).close();
-
-        runOnServer.run((RunOnServer) session -> {
-            RealmModel realm = session.getContext().getRealm();
-            WorkflowProvider provider = session.getProvider(WorkflowProvider.class);
-            UserModel user = session.users().getUserByUsername(realm,"testuser");
-
-            List<Workflow> registeredWorkflows = provider.getWorkflows().toList();
-            assertEquals(1, registeredWorkflows.size());
-
-            Workflow workflow = registeredWorkflows.get(0);
-            List<WorkflowStep> steps = workflow.getSteps().toList();
-            assertEquals(2, steps.size());
-            WorkflowStep notifyStep = steps.get(0);
-
-            WorkflowStateProvider stateProvider = session.getProvider(WorkflowStateProvider.class);
-            ScheduledStep scheduledStep = stateProvider.getScheduledStep(workflow.getId(), user.getId());
-            assertNotNull(scheduledStep, "A step should have been scheduled for the user " + user.getUsername());
-            assertEquals(notifyStep.getId(), scheduledStep.stepId());
-        });
-
-        // Simulate the user being 12 days old, making them eligible for both steps' time conditions.
-        runScheduledSteps(Duration.ofDays(12));
-
-        runOnServer.run((RunOnServer) session -> {
-            RealmModel realm = session.getContext().getRealm();
-            WorkflowProvider provider = session.getProvider(WorkflowProvider.class);
-            UserModel user = session.users().getUserByUsername(realm,"testuser");
-
-            try {
-                user = session.users().getUserById(realm, user.getId());
-                WorkflowStateProvider stateProvider = session.getProvider(WorkflowStateProvider.class);
-                List<Workflow> registeredWorkflows = provider.getWorkflows().toList();
-                assertEquals(1, registeredWorkflows.size());
-
-                Workflow workflow = registeredWorkflows.get(0);
-                // Verify that the next step was scheduled for the user
-                WorkflowStep disableStep = workflow.getSteps().toList().get(1);
-                ScheduledStep scheduledStep = stateProvider.getScheduledStep(workflow.getId(), user.getId());
-                assertNotNull(scheduledStep, "A step should have been scheduled for the user " + user.getUsername());
-                assertEquals(disableStep.getId(), scheduledStep.stepId(), "The second step should have been scheduled");
-            } finally {
-                Time.setOffset(0);
-            }
-        });
-
-        // Verify that the first step (notify) was executed by checking email was sent
-        MimeMessage testUserMessage = findEmailByRecipient(mailServer, "testuser@example.com");
-        assertNotNull(testUserMessage, "The first step (notify) should have sent an email.");
-        
-        mailServer.runCleanup();
     }
 
     @Test
@@ -508,96 +591,67 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
     }
 
     @Test
-    public void testDisableWorkflow() {
-        // create a test workflow
-        managedRealm.admin().workflows().create(WorkflowRepresentation.withName("test-workflow")
+    public void testWorkflowDoesNotFallThroughStepsInSingleRun() {
+        managedRealm.admin().workflows().create(WorkflowRepresentation.withName("myworkflow")
                 .onEvent(ResourceOperationType.USER_ADDED.toString())
                 .withSteps(
                         WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
                                 .after(Duration.ofDays(5))
                                 .build(),
                         WorkflowStepRepresentation.create().of(DisableUserStepProviderFactory.ID)
-                                .after(Duration.ofDays(5))
+                                .after(Duration.ofDays(10))
                                 .build()
                 ).build()).close();
-
-        WorkflowsResource workflows = managedRealm.admin().workflows();
-        List<WorkflowRepresentation> actualWorkflows = workflows.list();
-        assertThat(actualWorkflows, Matchers.hasSize(1));
-        WorkflowRepresentation workflow = actualWorkflows.get(0);
-        assertThat(workflow.getName(), is("test-workflow"));
 
         // create a new user - should bind the user to the workflow and setup the first step
         managedRealm.admin().users().create(UserConfigBuilder.create().username("testuser").email("testuser@example.com").build()).close();
 
-        // Advance time so the user is eligible for the first step, then run the scheduled steps so they transition to the next one.
-        runScheduledSteps(Duration.ofDays(6));
-
         runOnServer.run((RunOnServer) session -> {
             RealmModel realm = session.getContext().getRealm();
+            WorkflowProvider provider = session.getProvider(WorkflowProvider.class);
             UserModel user = session.users().getUserByUsername(realm, "testuser");
-            assertTrue(user.isEnabled(), "The second step (disable) should NOT have run.");
+
+            List<Workflow> registeredWorkflows = provider.getWorkflows().toList();
+            assertEquals(1, registeredWorkflows.size());
+
+            Workflow workflow = registeredWorkflows.get(0);
+            List<WorkflowStep> steps = workflow.getSteps().toList();
+            assertEquals(2, steps.size());
+            WorkflowStep notifyStep = steps.get(0);
+
+            WorkflowStateProvider stateProvider = session.getProvider(WorkflowStateProvider.class);
+            ScheduledStep scheduledStep = stateProvider.getScheduledStep(workflow.getId(), user.getId());
+            assertNotNull(scheduledStep, "A step should have been scheduled for the user " + user.getUsername());
+            assertEquals(notifyStep.getId(), scheduledStep.stepId());
         });
 
-        // Verify that the first step (notify) was executed by checking email was sent
-        MimeMessage testUserMessage = findEmailByRecipient(mailServer, "testuser@example.com");
-        assertNotNull(testUserMessage, "The first step (notify) should have sent an email.");
-
-        mailServer.runCleanup();
-
-        // disable the workflow - scheduled steps should be paused and workflow should not activate for new users
-        workflow.setEnabled(false);
-        managedRealm.admin().workflows().workflow(workflow.getId()).update(workflow).close();
-
-        // create another user - should NOT bind the user to the workflow as it is disabled
-        managedRealm.admin().users().create(UserConfigBuilder.create().username("anotheruser").build()).close();
-
-        // Advance time so the first user would be eligible for the second step, then run the scheduled steps.
+        // Simulate the user being 12 days old, making them eligible for both steps' time conditions.
         runScheduledSteps(Duration.ofDays(12));
 
         runOnServer.run((RunOnServer) session -> {
             RealmModel realm = session.getContext().getRealm();
             WorkflowProvider provider = session.getProvider(WorkflowProvider.class);
-
-            List<Workflow> registeredWorkflow = provider.getWorkflows().toList();
-            assertEquals(1, registeredWorkflow.size());
-            WorkflowStateProvider stateProvider = session.getKeycloakSessionFactory().getProviderFactory(WorkflowStateProvider.class).create(session);
-            List<ScheduledStep> scheduledSteps = stateProvider.getScheduledStepsByWorkflow(registeredWorkflow.get(0));
-
-            // verify that there's only one scheduled step, for the first user
-            assertEquals(1, scheduledSteps.size());
-            UserModel scheduledStepUser = session.users().getUserById(realm, scheduledSteps.get(0).resourceId());
-            assertNotNull(scheduledStepUser);
-            assertTrue(scheduledStepUser.getUsername().startsWith("testuser"));
-
             UserModel user = session.users().getUserByUsername(realm, "testuser");
-            // Verify that the step was NOT executed as the workflow is disabled.
-            assertTrue(user.isEnabled(), "The second step (disable) should NOT have run as the workflow is disabled.");
-        });
 
-        // re-enable the workflow - scheduled steps should resume and new users should be bound to the workflow
-        workflow.getConfig().putSingle("enabled", "true");
-        managedRealm.admin().workflows().workflow(workflow.getId()).update(workflow).close();
+            try {
+                user = session.users().getUserById(realm, user.getId());
+                WorkflowStateProvider stateProvider = session.getProvider(WorkflowStateProvider.class);
+                List<Workflow> registeredWorkflows = provider.getWorkflows().toList();
+                assertEquals(1, registeredWorkflows.size());
 
-        // create a third user - should bind the user to the workflow as it is enabled again
-        managedRealm.admin().users().create(UserConfigBuilder.create().username("thirduser").email("thirduser@example.com").build()).close();
-
-        // Advance time so the first user would be eligible for the second step, and third user would be eligible for the first step, then run the scheduled steps.
-        runScheduledSteps(Duration.ofDays(12));
-
-        runOnServer.run((RunOnServer) session -> {
-            RealmModel realm = session.getContext().getRealm();
-            UserModel user = session.users().getUserByUsername(realm, "testuser");
-            // Verify that the step was executed as the workflow was re-enabled.
-            assertFalse(user.isEnabled(), "The second step (disable) should have run as the workflow was re-enabled.");
-
-            // Verify that the third user was bound to the workflow
-            user = session.users().getUserByUsername(realm, "thirduser");
-            assertTrue(user.isEnabled(), "The second step (disable) should NOT have run");
+                Workflow workflow = registeredWorkflows.get(0);
+                // Verify that the next step was scheduled for the user
+                WorkflowStep disableStep = workflow.getSteps().toList().get(1);
+                ScheduledStep scheduledStep = stateProvider.getScheduledStep(workflow.getId(), user.getId());
+                assertNotNull(scheduledStep, "A step should have been scheduled for the user " + user.getUsername());
+                assertEquals(disableStep.getId(), scheduledStep.stepId(), "The second step should have been scheduled");
+            } finally {
+                Time.setOffset(0);
+            }
         });
 
         // Verify that the first step (notify) was executed by checking email was sent
-        testUserMessage = findEmailByRecipient(mailServer, "thirduser@example.com");
+        MimeMessage testUserMessage = findEmailByRecipient(mailServer, "testuser@example.com");
         assertNotNull(testUserMessage, "The first step (notify) should have sent an email.");
 
         mailServer.runCleanup();
@@ -670,19 +724,102 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
     }
 
     @Test
-    public void testFailCreateWorkflowWithNegativeTime() {
-        WorkflowSetRepresentation workflows = WorkflowRepresentation.withName("myworkflow")
-                .onEvent(USER_ADDED.name())
+    public void testDisableWorkflow() {
+        // create a test workflow
+        String workflowId;
+        try (Response response = managedRealm.admin().workflows().create(WorkflowRepresentation.withName("test-workflow")
+                .onEvent(ResourceOperationType.USER_ADDED.toString())
                 .withSteps(
-                        WorkflowStepRepresentation.create().of(SetUserAttributeStepProviderFactory.ID)
-                                .after(Duration.ofDays(-5))
-                                .withConfig("key", "value")
-                                .build())
-                .build();
-        try (Response response = managedRealm.admin().workflows().create(workflows)) {
-            assertThat(response.getStatus(), is(Response.Status.BAD_REQUEST.getStatusCode()));
-            assertThat(response.readEntity(ErrorRepresentation.class).getErrorMessage(), equalTo("Step 'after' configuration cannot be negative."));
+                        WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
+                                .after(Duration.ofDays(5))
+                                .build(),
+                        WorkflowStepRepresentation.create().of(DisableUserStepProviderFactory.ID)
+                                .after(Duration.ofDays(5))
+                                .build()
+                ).build())) {
+            workflowId = ApiUtil.getCreatedId(response);
         }
+
+        WorkflowsResource workflows = managedRealm.admin().workflows();
+        List<WorkflowRepresentation> actualWorkflows = workflows.list();
+        assertThat(actualWorkflows, hasSize(1));
+        WorkflowRepresentation workflow = actualWorkflows.get(0);
+        assertThat(workflow.getName(), is("test-workflow"));
+
+        // create a new user - should bind the user to the workflow and setup the first step
+        managedRealm.admin().users().create(UserConfigBuilder.create().username("testuser").email("testuser@example.com").build()).close();
+
+        // Advance time so the user is eligible for the first step, then run the scheduled steps so they transition to the next one.
+        runScheduledSteps(Duration.ofDays(6));
+
+        runOnServer.run((RunOnServer) session -> {
+            RealmModel realm = session.getContext().getRealm();
+            UserModel user = session.users().getUserByUsername(realm, "testuser");
+            assertTrue(user.isEnabled(), "The second step (disable) should NOT have run.");
+        });
+
+        // Verify that the first step (notify) was executed by checking email was sent
+        MimeMessage testUserMessage = findEmailByRecipient(mailServer, "testuser@example.com");
+        assertNotNull(testUserMessage, "The first step (notify) should have sent an email.");
+
+        mailServer.runCleanup();
+
+        // disable the workflow - scheduled steps should be paused and workflow should not activate for new users
+        workflow.setEnabled(false);
+        managedRealm.admin().workflows().workflow(workflowId).update(workflow).close();
+
+        // create another user - should NOT bind the user to the workflow as it is disabled
+        managedRealm.admin().users().create(UserConfigBuilder.create().username("anotheruser").build()).close();
+
+        // Advance time so the first user would be eligible for the second step, then run the scheduled steps.
+        runScheduledSteps(Duration.ofDays(12));
+
+        runOnServer.run((RunOnServer) session -> {
+            RealmModel realm = session.getContext().getRealm();
+            WorkflowProvider provider = session.getProvider(WorkflowProvider.class);
+
+            List<Workflow> registeredWorkflow = provider.getWorkflows().toList();
+            assertEquals(1, registeredWorkflow.size());
+            WorkflowStateProvider stateProvider = session.getKeycloakSessionFactory().getProviderFactory(WorkflowStateProvider.class).create(session);
+            List<ScheduledStep> scheduledSteps = stateProvider.getScheduledStepsByWorkflow(registeredWorkflow.get(0));
+
+            // verify that there's only one scheduled step, for the first user
+            assertEquals(1, scheduledSteps.size());
+            UserModel scheduledStepUser = session.users().getUserById(realm, scheduledSteps.get(0).resourceId());
+            assertNotNull(scheduledStepUser);
+            assertTrue(scheduledStepUser.getUsername().startsWith("testuser"));
+
+            UserModel user = session.users().getUserByUsername(realm, "testuser");
+            // Verify that the step was NOT executed as the workflow is disabled.
+            assertTrue(user.isEnabled(), "The second step (disable) should NOT have run as the workflow is disabled.");
+        });
+
+        // re-enable the workflow - scheduled steps should resume and new users should be bound to the workflow
+        workflow.getConfig().putSingle("enabled", "true");
+        managedRealm.admin().workflows().workflow(workflowId).update(workflow).close();
+
+        // create a third user - should bind the user to the workflow as it is enabled again
+        managedRealm.admin().users().create(UserConfigBuilder.create().username("thirduser").email("thirduser@example.com").build()).close();
+
+        // Advance time so the first user would be eligible for the second step, and third user would be eligible for the first step, then run the scheduled steps.
+        runScheduledSteps(Duration.ofDays(12));
+
+        runOnServer.run((RunOnServer) session -> {
+            RealmModel realm = session.getContext().getRealm();
+            UserModel user = session.users().getUserByUsername(realm, "testuser");
+            // Verify that the step was executed as the workflow was re-enabled.
+            assertFalse(user.isEnabled(), "The second step (disable) should have run as the workflow was re-enabled.");
+
+            // Verify that the third user was bound to the workflow
+            user = session.users().getUserByUsername(realm, "thirduser");
+            assertTrue(user.isEnabled(), "The second step (disable) should NOT have run");
+        });
+
+        // Verify that the first step (notify) was executed by checking email was sent
+        testUserMessage = findEmailByRecipient(mailServer, "thirduser@example.com");
+        assertNotNull(testUserMessage, "The first step (notify) should have sent an email.");
+
+        mailServer.runCleanup();
     }
 
     @Test
@@ -851,53 +988,18 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
     }
 
     @Test
-    public void testCreateUsingYaml() throws IOException {
-        YAMLMapper yamlMapper = YAMLMapper.builder().serializationInclusion(Include.NON_NULL).build();
-        WorkflowRepresentation expected = WorkflowRepresentation.withName("test")
+    public void testFailCreateWorkflowWithNegativeTime() {
+        WorkflowRepresentation workflow = WorkflowRepresentation.withName("myworkflow")
+                .onEvent(USER_ADDED.name())
                 .withSteps(
-                        WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
-                                .after(Duration.ofDays(5))
-                                .build(),
-                        WorkflowStepRepresentation.create().of(DisableUserStepProviderFactory.ID)
-                                .after(Duration.ofDays(5))
-                                .build()
-                ).build().getWorkflows().get(0);
-
-        try (Client httpClient = Keycloak.getClientProvider().newRestEasyClient(null, null, true)) {
-            httpClient.register(JacksonYAMLProvider.class);
-            WebTarget workflowsApi = httpClient.target(keycloakUrls.getBaseUrl().toString())
-                    .path("admin")
-                    .path("realms")
-                    .path(managedRealm.getName())
-                    .path("workflows")
-                    .register(new BearerAuthFilter(adminClient.tokenManager()));
-
-            try (Response response = workflowsApi.request().post(Entity.entity(yamlMapper.writeValueAsString(expected),
-                    YAMLMediaTypes.APPLICATION_JACKSON_YAML))) {
-                assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
-            }
-
-            try (Response response = workflowsApi.request().accept(YAMLMediaTypes.APPLICATION_JACKSON_YAML).get()) {
-                assertEquals(Status.OK.getStatusCode(), response.getStatus());
-                List<WorkflowRepresentation> workflows = yamlMapper.readValue(response.readEntity(String.class),
-                        new TypeReference<>() {
-                        });
-                assertFalse(workflows.isEmpty());
-                expected = workflows.get(0);
-            }
-
-            try (Response response = workflowsApi.path(expected.getId()).request()
-                    .accept(YAMLMediaTypes.APPLICATION_JACKSON_YAML).get()) {
-                assertEquals(Status.OK.getStatusCode(), response.getStatus());
-                WorkflowRepresentation actual = yamlMapper.readValue(response.readEntity(String.class), WorkflowRepresentation.class);
-                assertEquals(expected.getId(), actual.getId());
-                assertEquals(expected.getName(), actual.getName());
-            }
-
-            try (Response response = workflowsApi.path(expected.getId()).request()
-                    .put(Entity.entity(yamlMapper.writeValueAsString(expected), YAMLMediaTypes.APPLICATION_JACKSON_YAML))) {
-                assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
-            }
+                        WorkflowStepRepresentation.create().of(SetUserAttributeStepProviderFactory.ID)
+                                .after(Duration.ofDays(-5))
+                                .withConfig("key", "value")
+                                .build())
+                .build();
+        try (Response response = managedRealm.admin().workflows().create(workflow)) {
+            assertThat(response.getStatus(), is(Response.Status.BAD_REQUEST.getStatusCode()));
+            assertThat(response.readEntity(ErrorRepresentation.class).getErrorMessage(), equalTo("Step 'after' configuration cannot be negative."));
         }
     }
 
@@ -939,26 +1041,67 @@ public class WorkflowManagementTest extends AbstractWorkflowTest {
                 .orElse(null);
     }
 
-    public static void verifyEmailContent(MimeMessage message, String expectedRecipient, String subjectContains,
-                                           String... contentContains) {
-        try {
-            assertEquals(expectedRecipient, MailUtils.getRecipient(message));
-            assertThat(message.getSubject(), Matchers.containsString(subjectContains));
+    @Test
+    public void testCreateUsingYaml() throws IOException {
+        YAMLMapper yamlMapper = YAMLMapper.builder().serializationInclusion(Include.NON_NULL).build();
+        WorkflowRepresentation expected = WorkflowRepresentation.withName("test")
+                .withSteps(
+                        WorkflowStepRepresentation.create().of(NotifyUserStepProviderFactory.ID)
+                                .after(Duration.ofDays(5))
+                                .build(),
+                        WorkflowStepRepresentation.create().of(DisableUserStepProviderFactory.ID)
+                                .after(Duration.ofDays(5))
+                                .build()
+                ).build();
 
-            MailUtils.EmailBody body = MailUtils.getBody(message);
-            String textContent = body.getText();
-            String htmlContent = body.getHtml();
+        try (Client httpClient = Keycloak.getClientProvider().newRestEasyClient(null, null, true)) {
+            httpClient.register(JacksonYAMLProvider.class);
+            WebTarget workflowsApi = httpClient.target(keycloakUrls.getBaseUrl().toString())
+                    .path("admin")
+                    .path("realms")
+                    .path(managedRealm.getName())
+                    .path("workflows")
+                    .register(new BearerAuthFilter(adminClient.tokenManager()));
 
-            for (String expectedContent : contentContains) {
-                boolean foundInText = textContent.contains(expectedContent);
-                boolean foundInHtml = htmlContent.contains(expectedContent);
-                assertTrue(foundInText || foundInHtml,
-                        "Email content should contain: " + expectedContent +
-                                "\nText: " + textContent +
-                                "\nHTML: " + htmlContent);
+            String workflowId;
+            try (Response response = workflowsApi.request().post(Entity.entity(yamlMapper.writeValueAsString(expected),
+                    YAMLMediaTypes.APPLICATION_JACKSON_YAML))) {
+                assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+                workflowId = ApiUtil.getCreatedId(response);
             }
-        } catch (MessagingException | IOException e) {
-            Assertions.fail("Failed to read email message: " + e.getMessage());
+
+            try (Response response = workflowsApi.request().accept(YAMLMediaTypes.APPLICATION_JACKSON_YAML).get()) {
+                assertEquals(Status.OK.getStatusCode(), response.getStatus());
+                List<WorkflowRepresentation> workflows = yamlMapper.readValue(response.readEntity(String.class),
+                        new TypeReference<>() {
+                        });
+                assertFalse(workflows.isEmpty());
+                expected = workflows.get(0);
+            }
+
+            try (Response response = workflowsApi.path(workflowId).request()
+                    .accept(YAMLMediaTypes.APPLICATION_JACKSON_YAML).get()) {
+                assertEquals(Status.OK.getStatusCode(), response.getStatus());
+                WorkflowRepresentation actual = yamlMapper.readValue(response.readEntity(String.class), WorkflowRepresentation.class);
+                assertEquals(expected.getName(), actual.getName());
+            }
+
+            try (Response response = workflowsApi.path(workflowId).request()
+                    .put(Entity.entity(yamlMapper.writeValueAsString(expected), YAMLMediaTypes.APPLICATION_JACKSON_YAML))) {
+                assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
+            }
+        }
+    }
+
+    private static class DefaultUserConfig implements UserConfig {
+
+        @Override
+        public UserConfigBuilder configure(UserConfigBuilder user) {
+            user.username("alice");
+            user.password("alice");
+            user.name("alice", "alice");
+            user.email("master-admin@email.org");
+            return user;
         }
     }
 }

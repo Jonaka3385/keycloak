@@ -357,7 +357,7 @@ public class DPoPTest extends AbstractTestRealmKeycloakTest {
     public void testDPoPProofByConfidentialClient_EdDSA() throws Exception {
         // Generating keys
         String curveName = AbstractEddsaKeyProviderFactory.DEFAULT_EDDSA_ELLIPTIC_CURVE;
-        KeyPair keyPair = AbstractEddsaKeyProviderFactory.generateEddsaKeyPair(curveName);
+        KeyPair keyPair = KeyUtils.generateEddsaKeyPair(curveName);
 
         // JWK
         JWKBuilder b = JWKBuilder.create()
@@ -851,7 +851,7 @@ public class DPoPTest extends AbstractTestRealmKeycloakTest {
         // Login with dpop_jkt -- should be OK
         long clockSkew = 10;
         sendAuthorizationRequestWithDPoPJkt(jktEc);
-        String dpopProofEcEncoded = generateSignedDPoPProof(UUID.randomUUID().toString(), HttpMethod.POST, oauth.getEndpoints().getToken(), (long) (Time.currentTime() + clockSkew), Algorithm.ES256, jwsEcHeader, ecKeyPair.getPrivate(), null);
+        String dpopProofEcEncoded = generateSignedDPoPProof(UUID.randomUUID().toString(), HttpMethod.POST, oauth.getEndpoints().getToken(), Time.currentTime() + clockSkew, Algorithm.ES256, jwsEcHeader, ecKeyPair.getPrivate(), null);
         successTokenProceduresWithDPoP(dpopProofEcEncoded, jktEc, true, true);
 
         updatePolicies("{}");
@@ -971,7 +971,7 @@ public class DPoPTest extends AbstractTestRealmKeycloakTest {
         });
 
         try (Keycloak adminClientDPoP = AdminClientUtil.createAdminClient(false, ServerURLs.getAuthServerContextRoot(), REALM_NAME,
-                "test-admin@localhost", "password", TEST_CONFIDENTIAL_CLIENT_ID, TEST_CONFIDENTIAL_CLIENT_SECRET, null, true);
+                "test-admin@localhost", "password", TEST_CONFIDENTIAL_CLIENT_ID, TEST_CONFIDENTIAL_CLIENT_SECRET, null, true)
         ) {
             RealmRepresentation realm = adminClientDPoP.realm(REALM_NAME).toRepresentation();
             Assert.assertEquals(REALM_NAME, realm.getRealm());
@@ -992,7 +992,7 @@ public class DPoPTest extends AbstractTestRealmKeycloakTest {
         });
 
         try (Keycloak adminClientDPoP = AdminClientUtil.createAdminClient(false, ServerURLs.getAuthServerContextRoot(), REALM_NAME,
-                "test-admin@localhost", "password", TEST_CONFIDENTIAL_CLIENT_ID, TEST_CONFIDENTIAL_CLIENT_SECRET, null, false);
+                "test-admin@localhost", "password", TEST_CONFIDENTIAL_CLIENT_ID, TEST_CONFIDENTIAL_CLIENT_SECRET, null, false)
         ) {
             adminClientDPoP.realm(REALM_NAME).toRepresentation();
             Assert.fail("Expected exception when calling adminClient without DPoP for the client, which requires DPoP");

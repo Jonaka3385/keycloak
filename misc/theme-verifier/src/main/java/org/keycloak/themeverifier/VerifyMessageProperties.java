@@ -44,12 +44,15 @@ public class VerifyMessageProperties {
         this.file = file;
     }
 
+    private final static Pattern HTML_ENTITIES = Pattern.compile("&[a-zA-Z]+;");
+
     public List<String> verify() throws MojoExecutionException {
         messages = new ArrayList<>();
         try {
             String contents = Files.readString(file.toPath());
             verifyNoDuplicateKeys(contents);
             verifySafeHtml();
+            verifyNoHtmlEntities();
             verifyProblematicBlanks();
             if (validateMessageFormatQuotes) {
                 verifyMessageFormatQuotes();
@@ -63,6 +66,19 @@ public class VerifyMessageProperties {
             throw new MojoExecutionException("Can not read file " + file, e);
         }
         return messages;
+    }
+
+    private void verifyNoHtmlEntities() {
+        PropertyResourceBundle bundle = getPropertyResourceBundle();
+
+        bundle.getKeys().asIterator().forEachRemaining(key -> {
+            String value = bundle.getString(key);
+
+            if (HTML_ENTITIES.matcher(value).find()) {
+                messages.add("HTML entities should not be used, as UTF-8 can be used instead '" + key + "' for file " + file + ": " + value);
+            }
+
+        });
     }
 
     private final static Pattern DOUBLE_SINGLE_QUOTES = Pattern.compile("''");

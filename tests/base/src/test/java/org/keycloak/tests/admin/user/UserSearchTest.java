@@ -19,7 +19,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.representations.userprofile.config.UPConfig;
 import org.keycloak.testframework.annotations.KeycloakIntegrationTest;
 import org.keycloak.testframework.realm.UserConfigBuilder;
-import org.keycloak.tests.utils.admin.ApiUtil;
+import org.keycloak.testframework.util.ApiUtil;
 import org.keycloak.userprofile.DefaultAttributes;
 import org.keycloak.userprofile.validator.UsernameProhibitedCharactersValidator;
 
@@ -495,13 +495,13 @@ public class UserSearchTest extends AbstractUserTest {
 
         // Should allow searching for multiple users
         String expectedUserId2 = userIds.get(1);
-        List<UserRepresentation> multipleUsers = managedRealm.admin().users().search(String.format("id:%s %s", expectedUserId, expectedUserId2), 0 , 10);;
+        List<UserRepresentation> multipleUsers = managedRealm.admin().users().search(String.format("id:%s %s", expectedUserId, expectedUserId2), 0 , 10);
         assertThat(multipleUsers, hasSize(2));
         assertThat(multipleUsers.get(0).getId(), is(expectedUserId));
         assertThat(multipleUsers.get(1).getId(), is(expectedUserId2));
 
         // Should take arbitrary amount of spaces in between ids
-        List<UserRepresentation> multipleUsers2 = managedRealm.admin().users().search(String.format("id:  %s   %s  ", expectedUserId, expectedUserId2), 0 , 10);;
+        List<UserRepresentation> multipleUsers2 = managedRealm.admin().users().search(String.format("id:  %s   %s  ", expectedUserId, expectedUserId2), 0 , 10);
         assertThat(multipleUsers2, hasSize(2));
         assertThat(multipleUsers2.get(0).getId(), is(expectedUserId));
         assertThat(multipleUsers2.get(1).getId(), is(expectedUserId2));
@@ -756,7 +756,7 @@ public class UserSearchTest extends AbstractUserTest {
         client.setSecret("secret");
         client.setServiceAccountsEnabled(true);
         client.setEnabled(true);
-        client.setRedirectUris(Arrays.asList("http://url"));
+        client.setRedirectUris(List.of("http://url"));
 
         String clientId = ApiUtil.getCreatedId(managedRealm.admin().clients().create(client));
 

@@ -18,12 +18,12 @@
 package org.keycloak.testsuite.oid4vc.issuance.credentialbuilder;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.keycloak.constants.Oid4VciConstants;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
 import org.keycloak.protocol.oid4vc.issuance.TimeProvider;
@@ -34,6 +34,8 @@ import org.keycloak.protocol.oid4vc.model.VerifiableCredential;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
+
+import static org.keycloak.OID4VCConstants.CREDENTIAL_SUBJECT;
 
 import static org.junit.Assert.assertEquals;
 
@@ -68,11 +70,12 @@ public class JwtCredentialBuilderTest extends CredentialBuilderTest {
 
     @Test
     public void buildJwtCredential_SetNbfAsCurrentTimeIfIssuanceDateNotSupplied() throws Exception {
+        JwtCredentialBuilder builderWithoutSession = new JwtCredentialBuilder(timeProvider, instant -> instant.truncatedTo(ChronoUnit.MINUTES));
         VerifiableCredential verifiableCredential = getTestCredential(exampleCredentialClaimsWithoutIssuanceDate());
         CredentialBuildConfig credentialBuildConfig = new CredentialBuildConfig().setTokenJwsType("JWT");
 
         // Build
-        JwtCredentialBody jwtCredentialBody = builder
+        JwtCredentialBody jwtCredentialBody = builderWithoutSession
                 .buildCredentialBody(verifiableCredential, credentialBuildConfig);
 
         // Sign and parse JWS string
@@ -80,13 +83,16 @@ public class JwtCredentialBuilderTest extends CredentialBuilderTest {
         JWSInput jwsInput = new JWSInput(jws);
         JsonNode payload = jwsInput.readJsonContent(JsonNode.class);
 
-        // Assert that nbf is set and comes from the static time provider
-        assertEquals(timeProvider.currentTimeSeconds(), payload.get("nbf").asLong());
+        // Assert that nbf is set to the normalized (minute-truncated) current time when no issuance date is supplied
+        long expectedNormalizedNbf = Instant.ofEpochSecond(timeProvider.currentTimeSeconds())
+                .truncatedTo(ChronoUnit.MINUTES)
+                .getEpochSecond();
+        assertEquals(expectedNormalizedNbf, payload.get("nbf").asLong());
     }
 
     private JsonNode parseCredentialSubject(JWSInput jwsInput) throws JWSInputException {
         JsonNode payload = jwsInput.readJsonContent(JsonNode.class);
-        return payload.get("vc").get(Oid4VciConstants.CREDENTIAL_SUBJECT);
+        return payload.get("vc").get(CREDENTIAL_SUBJECT);
     }
 
     private Map<String, Object> exampleCredentialClaims() {

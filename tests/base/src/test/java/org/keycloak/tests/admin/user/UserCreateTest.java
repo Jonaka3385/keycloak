@@ -41,9 +41,9 @@ import org.keycloak.testframework.realm.RoleConfigBuilder;
 import org.keycloak.testframework.realm.UserConfigBuilder;
 import org.keycloak.testframework.server.KeycloakServerConfig;
 import org.keycloak.testframework.server.KeycloakServerConfigBuilder;
+import org.keycloak.testframework.util.ApiUtil;
 import org.keycloak.tests.utils.Assert;
 import org.keycloak.tests.utils.admin.AdminEventPaths;
-import org.keycloak.tests.utils.admin.ApiUtil;
 import org.keycloak.testsuite.federation.DummyUserFederationProviderFactory;
 import org.keycloak.util.JsonSerialization;
 
@@ -214,7 +214,7 @@ public class UserCreateTest extends AbstractUserTest {
         hashedPassword.setUserLabel("deviceX");
         hashedPassword.setType(CredentialRepresentation.PASSWORD);
 
-        user.setCredentials(Arrays.asList(hashedPassword));
+        user.setCredentials(List.of(hashedPassword));
 
         createUser(user);
 
@@ -251,11 +251,11 @@ public class UserCreateTest extends AbstractUserTest {
         Assertions.assertNotNull(deprecatedHashedPassword.getHashedSaltedValue());
         Assertions.assertNull(deprecatedHashedPassword.getCredentialData());
 
-        deprecatedHashedPassword.setCreatedDate(1001l);
+        deprecatedHashedPassword.setCreatedDate(1001L);
         deprecatedHashedPassword.setUserLabel("deviceX");
         deprecatedHashedPassword.setType(CredentialRepresentation.PASSWORD);
 
-        user.setCredentials(Arrays.asList(deprecatedHashedPassword));
+        user.setCredentials(List.of(deprecatedHashedPassword));
 
         createUser(user, false);
 
@@ -281,7 +281,7 @@ public class UserCreateTest extends AbstractUserTest {
         password.setValue("password");
         password.setType(CredentialRepresentation.PASSWORD);
         password.setTemporary(true);
-        user.setCredentials(Arrays.asList(password));
+        user.setCredentials(List.of(password));
 
         String userId = createUser(user);
 
@@ -299,7 +299,7 @@ public class UserCreateTest extends AbstractUserTest {
         CredentialRepresentation rawPassword = new CredentialRepresentation();
         rawPassword.setValue("ABCD");
         rawPassword.setType(CredentialRepresentation.PASSWORD);
-        user.setCredentials(Arrays.asList(rawPassword));
+        user.setCredentials(List.of(rawPassword));
 
         createUser(user);
 

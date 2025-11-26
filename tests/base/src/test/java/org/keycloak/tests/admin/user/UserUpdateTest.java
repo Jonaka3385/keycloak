@@ -2,6 +2,7 @@ package org.keycloak.tests.admin.user;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
@@ -26,8 +27,8 @@ import org.keycloak.testframework.oauth.OAuthClient;
 import org.keycloak.testframework.oauth.annotations.InjectOAuthClient;
 import org.keycloak.testframework.realm.ManagedRealm;
 import org.keycloak.testframework.realm.UserConfigBuilder;
+import org.keycloak.testframework.util.ApiUtil;
 import org.keycloak.tests.utils.admin.AdminEventPaths;
-import org.keycloak.tests.utils.admin.ApiUtil;
 import org.keycloak.testsuite.util.AccountHelper;
 
 import org.junit.jupiter.api.Assertions;
@@ -266,7 +267,7 @@ public class UserUpdateTest extends AbstractUserTest {
         CredentialRepresentation rawPassword = new CredentialRepresentation();
         rawPassword.setValue("ABCD");
         rawPassword.setType(CredentialRepresentation.PASSWORD);
-        user.setCredentials(Arrays.asList(rawPassword));
+        user.setCredentials(List.of(rawPassword));
 
         String id = createUser(user);
 
@@ -284,7 +285,7 @@ public class UserUpdateTest extends AbstractUserTest {
         CredentialRepresentation rawPasswordForUpdate = new CredentialRepresentation();
         rawPasswordForUpdate.setValue("EFGH");
         rawPasswordForUpdate.setType(CredentialRepresentation.PASSWORD);
-        userRep.setCredentials(Arrays.asList(rawPasswordForUpdate));
+        userRep.setCredentials(List.of(rawPasswordForUpdate));
 
         updateUser(userResource, userRep);
 

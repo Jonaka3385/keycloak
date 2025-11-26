@@ -56,7 +56,7 @@ public class TokenVerifier<T extends JsonWebToken> {
      * @param <T> Type of the token handled by this predicate.
      */
     // @FunctionalInterface
-    public static interface Predicate<T extends JsonWebToken> {
+    public interface Predicate<T extends JsonWebToken> {
         /**
          * Performs a single check on the given token verifier.
          * @param t Token, guaranteed to be non-null.
@@ -119,7 +119,7 @@ public class TokenVerifier<T extends JsonWebToken> {
 
     public static class TokenTypeCheck implements Predicate<JsonWebToken> {
 
-        private static final TokenTypeCheck INSTANCE_DEFAULT_TOKEN_TYPE = new TokenTypeCheck(Arrays.asList(TokenUtil.TOKEN_TYPE_BEARER));
+        private static final TokenTypeCheck INSTANCE_DEFAULT_TOKEN_TYPE = new TokenTypeCheck(List.of(TokenUtil.TOKEN_TYPE_BEARER));
 
         private final List<String> tokenTypes;
 
@@ -132,7 +132,7 @@ public class TokenVerifier<T extends JsonWebToken> {
             for (String tokenType : tokenTypes) {
                 if (tokenType.equalsIgnoreCase(t.getType())) return true;
             }
-            throw new VerificationException("Token type is incorrect. Expected '" + tokenTypes.toString() + "' but was '" + t.getType() + "'");
+            throw new VerificationException("Token type is incorrect. Expected '" + tokenTypes + "' but was '" + t.getType() + "'");
         }
     }
 
@@ -248,7 +248,7 @@ public class TokenVerifier<T extends JsonWebToken> {
      * <ul>
      * <li>Realm URL (JWT issuer field: {@code iss}) has to be defined and match realm set via {@link #realmUrl(java.lang.String)} method</li>
      * <li>Subject (JWT subject field: {@code sub}) has to be defined</li>
-     * <li>Token type (JWT type field: {@code typ}) has to be {@code Bearer}. The type can be set via {@link #tokenType(java.lang.String)} method</li>
+     * <li>Token type (JWT type field: {@code typ}) has to be {@code Bearer}. The type can be set via {@link #tokenType(List)} method</li>
      * <li>Token has to be active, ie. both not expired and not used before its validity (JWT issuer fields: {@code exp} and {@code nbf})</li>
      * </ul>
      * @return This token verifier.

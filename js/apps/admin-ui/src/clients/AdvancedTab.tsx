@@ -4,9 +4,10 @@ import { AlertVariant, PageSection, Text } from "@patternfly/react-core";
 import type { TFunction } from "i18next";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { ScrollForm } from "@keycloak/keycloak-ui-shared";
 import type { AddAlertFunction } from "@keycloak/keycloak-ui-shared";
+import { ScrollForm } from "@keycloak/keycloak-ui-shared";
 import { convertAttributeNameToForm, toUpperCase } from "../util";
+import useIsFeatureEnabled, { Feature } from "../utils/useIsFeatureEnabled";
 import type { FormFields, SaveOptions } from "./ClientDetails";
 import { AdvancedSettings } from "./advanced/AdvancedSettings";
 import { AuthenticationOverrides } from "./advanced/AuthenticationOverrides";
@@ -15,10 +16,7 @@ import { FineGrainOpenIdConnect } from "./advanced/FineGrainOpenIdConnect";
 import { FineGrainSamlEndpointConfig } from "./advanced/FineGrainSamlEndpointConfig";
 import { OpenIdConnectCompatibilityModes } from "./advanced/OpenIdConnectCompatibilityModes";
 import { OpenIdVerifiableCredentials } from "./advanced/OpenIdVerifiableCredentials";
-import useIsFeatureEnabled, { Feature } from "../utils/useIsFeatureEnabled";
-
-const PROTOCOL_OIDC = "openid-connect";
-const PROTOCOL_OID4VC = "oid4vc";
+import { PROTOCOL_OID4VC, PROTOCOL_OIDC } from "./constants";
 
 export const parseResult = (
   result: GlobalRequestResult,

@@ -18,8 +18,8 @@ import org.keycloak.testframework.annotations.KeycloakIntegrationTest;
 import org.keycloak.testframework.events.AdminEventAssertion;
 import org.keycloak.testframework.realm.GroupConfigBuilder;
 import org.keycloak.testframework.realm.UserConfigBuilder;
+import org.keycloak.testframework.util.ApiUtil;
 import org.keycloak.tests.utils.admin.AdminEventPaths;
-import org.keycloak.tests.utils.admin.ApiUtil;
 
 import org.junit.jupiter.api.Test;
 
@@ -65,9 +65,9 @@ public class UserGroupTest extends AbstractUserTest {
         String groupName1 = "group1WithAttribute";
         String groupName2 = "group2WithAttribute";
         Map<String, List<String>> attributes1 = new HashMap<String, List<String>>();
-        attributes1.put("attribute1", Arrays.asList("attribute1"));
+        attributes1.put("attribute1", List.of("attribute1"));
         Map<String, List<String>> attributes2 = new HashMap<String, List<String>>();
-        attributes2.put("attribute2", Arrays.asList("attribute2"));
+        attributes2.put("attribute2", List.of("attribute2"));
 
         UserRepresentation userRepresentation = UserConfigBuilder.create()
                 .username(userName).name("average", "joe").password("password")

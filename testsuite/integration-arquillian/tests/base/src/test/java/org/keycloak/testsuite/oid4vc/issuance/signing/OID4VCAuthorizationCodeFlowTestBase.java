@@ -96,7 +96,7 @@ public abstract class OID4VCAuthorizationCodeFlowTestBase extends OID4VCIssuerEn
         Oid4vcTestContext ctx = new Oid4vcTestContext();
 
         // Get credential issuer metadata
-        HttpGet getCredentialIssuer = new HttpGet(getRealmPath(TEST_REALM_NAME) + "/.well-known/openid-credential-issuer");
+        HttpGet getCredentialIssuer = new HttpGet(getRealmMetadataPath(TEST_REALM_NAME));
         try (CloseableHttpResponse response = httpClient.execute(getCredentialIssuer)) {
             assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
             String s = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -132,7 +132,7 @@ public abstract class OID4VCAuthorizationCodeFlowTestBase extends OID4VCIssuerEn
         // Construct claim path based on credential format
         List<Object> claimPath;
         if ("sd_jwt_vc".equals(getCredentialFormat())) {
-            claimPath = Arrays.asList(getExpectedClaimPath());
+            claimPath = Collections.singletonList(getExpectedClaimPath());
         } else {
             claimPath = Arrays.asList("credentialSubject", getExpectedClaimPath());
         }
@@ -142,7 +142,7 @@ public abstract class OID4VCAuthorizationCodeFlowTestBase extends OID4VCIssuerEn
         AuthorizationDetail authDetail = new AuthorizationDetail();
         authDetail.setType(OPENID_CREDENTIAL_TYPE);
         authDetail.setCredentialConfigurationId(getCredentialClientScope().getAttributes().get(CredentialScopeModel.CONFIGURATION_ID));
-        authDetail.setClaims(Arrays.asList(claim));
+        authDetail.setClaims(List.of(claim));
         authDetail.setLocations(Collections.singletonList(ctx.credentialIssuer.getCredentialIssuer()));
 
         List<AuthorizationDetail> authDetails = List.of(authDetail);

@@ -121,7 +121,7 @@ public abstract class OID4VCAuthorizationDetailsFlowTestBase extends OID4VCIssue
             ctx.credentialsOffer = JsonSerialization.readValue(s, CredentialsOffer.class);
         }
 
-        HttpGet getIssuerMetadata = new HttpGet(ctx.credentialsOffer.getCredentialIssuer() + "/.well-known/openid-credential-issuer");
+        HttpGet getIssuerMetadata = new HttpGet(ctx.credentialsOffer.getIssuerMetadataUrl());
         try (CloseableHttpResponse response = httpClient.execute(getIssuerMetadata)) {
             assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
             String s = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -193,7 +193,7 @@ public abstract class OID4VCAuthorizationDetailsFlowTestBase extends OID4VCIssue
         List<Object> claimPath;
         if ("sd_jwt_vc".equals(getCredentialFormat())) {
             // SD-JWT doesn't use credentialSubject prefix
-            claimPath = Arrays.asList(getExpectedClaimPath());
+            claimPath = Collections.singletonList(getExpectedClaimPath());
         } else {
             // JWT and other formats use credentialSubject prefix
             claimPath = Arrays.asList("credentialSubject", getExpectedClaimPath());
@@ -204,7 +204,7 @@ public abstract class OID4VCAuthorizationDetailsFlowTestBase extends OID4VCIssue
         AuthorizationDetail authDetail = new AuthorizationDetail();
         authDetail.setType(OPENID_CREDENTIAL_TYPE);
         authDetail.setCredentialConfigurationId(getCredentialClientScope().getAttributes().get(CredentialScopeModel.CONFIGURATION_ID));
-        authDetail.setClaims(Arrays.asList(claim));
+        authDetail.setClaims(List.of(claim));
         authDetail.setLocations(Collections.singletonList(ctx.credentialIssuer.getCredentialIssuer()));
 
         List<AuthorizationDetail> authDetails = List.of(authDetail);
@@ -233,7 +233,7 @@ public abstract class OID4VCAuthorizationDetailsFlowTestBase extends OID4VCIssue
 
             List<Object> expectedClaimPath;
             if ("sd_jwt_vc".equals(getCredentialFormat())) {
-                expectedClaimPath = Arrays.asList(getExpectedClaimPath());
+                expectedClaimPath = Collections.singletonList(getExpectedClaimPath());
             } else {
                 expectedClaimPath = Arrays.asList("credentialSubject", getExpectedClaimPath());
             }
@@ -259,7 +259,7 @@ public abstract class OID4VCAuthorizationDetailsFlowTestBase extends OID4VCIssue
         AuthorizationDetail authDetail = new AuthorizationDetail();
         authDetail.setType(OPENID_CREDENTIAL_TYPE);
         authDetail.setCredentialConfigurationId(getCredentialClientScope().getAttributes().get(CredentialScopeModel.CONFIGURATION_ID));
-        authDetail.setClaims(Arrays.asList(claim));
+        authDetail.setClaims(List.of(claim));
         authDetail.setLocations(Collections.singletonList(ctx.credentialIssuer.getCredentialIssuer()));
 
         List<AuthorizationDetail> authDetails = List.of(authDetail);
@@ -295,7 +295,7 @@ public abstract class OID4VCAuthorizationDetailsFlowTestBase extends OID4VCIssue
         AuthorizationDetail authDetail = new AuthorizationDetail();
         authDetail.setType(OPENID_CREDENTIAL_TYPE);
         authDetail.setCredentialConfigurationId(getCredentialClientScope().getAttributes().get(CredentialScopeModel.CONFIGURATION_ID));
-        authDetail.setClaims(Arrays.asList(claim));
+        authDetail.setClaims(List.of(claim));
         authDetail.setLocations(Collections.singletonList(ctx.credentialIssuer.getCredentialIssuer()));
 
         List<AuthorizationDetail> authDetails = List.of(authDetail);
@@ -331,7 +331,7 @@ public abstract class OID4VCAuthorizationDetailsFlowTestBase extends OID4VCIssue
         AuthorizationDetail authDetail = new AuthorizationDetail();
         authDetail.setType(OPENID_CREDENTIAL_TYPE);
         authDetail.setCredentialConfigurationId(getCredentialClientScope().getAttributes().get(CredentialScopeModel.CONFIGURATION_ID));
-        authDetail.setClaims(Arrays.asList(claim));
+        authDetail.setClaims(List.of(claim));
         authDetail.setLocations(Collections.singletonList(ctx.credentialIssuer.getCredentialIssuer()));
 
         List<AuthorizationDetail> authDetails = List.of(authDetail);
@@ -405,7 +405,7 @@ public abstract class OID4VCAuthorizationDetailsFlowTestBase extends OID4VCIssue
         AuthorizationDetail authDetail = new AuthorizationDetail();
         authDetail.setType(OPENID_CREDENTIAL_TYPE);
         authDetail.setCredentialConfigurationId(getCredentialClientScope().getAttributes().get(CredentialScopeModel.CONFIGURATION_ID));
-        authDetail.setClaims(Arrays.asList(claim));
+        authDetail.setClaims(List.of(claim));
         authDetail.setLocations(Collections.singletonList(ctx.credentialIssuer.getCredentialIssuer()));
 
         List<AuthorizationDetail> authDetails = List.of(authDetail);
@@ -642,7 +642,7 @@ public abstract class OID4VCAuthorizationDetailsFlowTestBase extends OID4VCIssue
         // Construct claim path based on credential format
         List<Object> claimPath;
         if ("sd_jwt_vc".equals(getCredentialFormat())) {
-            claimPath = Arrays.asList(getExpectedClaimPath());
+            claimPath = Collections.singletonList(getExpectedClaimPath());
         } else {
             claimPath = Arrays.asList("credentialSubject", getExpectedClaimPath());
         }
@@ -652,7 +652,7 @@ public abstract class OID4VCAuthorizationDetailsFlowTestBase extends OID4VCIssue
         AuthorizationDetail authDetail = new AuthorizationDetail();
         authDetail.setType(OPENID_CREDENTIAL_TYPE);
         authDetail.setCredentialConfigurationId(getCredentialClientScope().getAttributes().get(CredentialScopeModel.CONFIGURATION_ID));
-        authDetail.setClaims(Arrays.asList(claim));
+        authDetail.setClaims(List.of(claim));
         authDetail.setLocations(Collections.singletonList(ctx.credentialIssuer.getCredentialIssuer()));
 
         List<AuthorizationDetail> authDetails = List.of(authDetail);
