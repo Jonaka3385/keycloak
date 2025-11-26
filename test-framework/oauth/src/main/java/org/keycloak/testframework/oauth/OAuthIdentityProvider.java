@@ -74,6 +74,44 @@ public class OAuthIdentityProvider {
         httpServer.removeContext("/idp/jwks");
     }
 
+    public class WellKnownHandler implements HttpHandler {
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            OIDCConfigurationRepresentation oidcConfig = new OIDCConfigurationRepresentation();
+            oidcConfig.setJwksUri("http://127.0.0.1:8500/idp/jwks");
+            String oidcConfigString = JsonSerialization.writeValueAsString(oidcConfig);
+
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, oidcConfigString.length());
+            OutputStream outputStream = exchange.getResponseBody();
+            outputStream.write(oidcConfigString.getBytes(StandardCharsets.UTF_8));
+            outputStream.close();
+        }
+
+    }
+
+    public class JwksHttpHandler implements HttpHandler {
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            boolean kubernetes = OAuthIdentityProviderConfigBuilder.Mode.KUBERNETES.equals(config.mode());
+
+            if (kubernetes) {
+                exchange.getResponseHeaders().add("Content-Type", "application/jwk-set+json");
+            } else {
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+            }
+            exchange.sendResponseHeaders(200, keys.getJwksString().length());
+            OutputStream outputStream = exchange.getResponseBody();
+            outputStream.write(keys.getJwksString().getBytes(StandardCharsets.UTF_8));
+            outputStream.close();
+
+            keysRequestCount++;
+        }
+
+    }
+
     public static class OAuthIdentityProviderKeys {
 
         private final KeyWrapper keyWrapper;
@@ -126,44 +164,6 @@ public class OAuthIdentityProvider {
         public String getJwksString() {
             return jwksString;
         }
-    }
-
-    public class WellKnownHandler implements HttpHandler {
-
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            OIDCConfigurationRepresentation oidcConfig = new OIDCConfigurationRepresentation();
-            oidcConfig.setJwksUri("http://127.0.0.1:8500/idp/jwks");
-            String oidcConfigString = JsonSerialization.writeValueAsString(oidcConfig);
-
-            exchange.getResponseHeaders().add("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, oidcConfigString.length());
-            OutputStream outputStream = exchange.getResponseBody();
-            outputStream.write(oidcConfigString.getBytes(StandardCharsets.UTF_8));
-            outputStream.close();
-        }
-
-    }
-
-    public class JwksHttpHandler implements HttpHandler {
-
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            boolean kubernetes = OAuthIdentityProviderConfigBuilder.Mode.KUBERNETES.equals(config.mode());
-
-            if (kubernetes) {
-                exchange.getResponseHeaders().add("Content-Type", "application/jwk-set+json");
-            } else {
-                exchange.getResponseHeaders().add("Content-Type", "application/json");
-            }
-            exchange.sendResponseHeaders(200, keys.getJwksString().length());
-            OutputStream outputStream = exchange.getResponseBody();
-            outputStream.write(keys.getJwksString().getBytes(StandardCharsets.UTF_8));
-            outputStream.close();
-
-            keysRequestCount++;
-        }
-
     }
 
 }

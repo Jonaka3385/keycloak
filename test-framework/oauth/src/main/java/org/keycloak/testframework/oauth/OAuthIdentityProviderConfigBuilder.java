@@ -24,13 +24,13 @@ public class OAuthIdentityProviderConfigBuilder {
         return new OAuthIdentityProviderConfiguration(mode, jwkUse);
     }
 
+    public record OAuthIdentityProviderConfiguration(Mode mode, boolean jwkUse) {
+    }
+
     public enum Mode {
         DEFAULT,
         SPIFFE,
         KUBERNETES
-    }
-
-    public record OAuthIdentityProviderConfiguration(Mode mode, boolean jwkUse) {
     }
 
 }

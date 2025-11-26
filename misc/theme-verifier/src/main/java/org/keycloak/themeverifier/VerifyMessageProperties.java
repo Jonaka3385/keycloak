@@ -44,8 +44,6 @@ public class VerifyMessageProperties {
         this.file = file;
     }
 
-    private final static Pattern HTML_ENTITIES = Pattern.compile("&[a-zA-Z]+;");
-
     public List<String> verify() throws MojoExecutionException {
         messages = new ArrayList<>();
         try {
@@ -67,6 +65,8 @@ public class VerifyMessageProperties {
         }
         return messages;
     }
+
+    private final static Pattern HTML_ENTITIES = Pattern.compile("&[a-zA-Z]+;");
 
     private void verifyNoHtmlEntities() {
         PropertyResourceBundle bundle = getPropertyResourceBundle();

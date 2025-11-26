@@ -11,9 +11,6 @@ import org.keycloak.crypto.SignatureVerifierContext;
 
 public class KeyWrapperUtil {
 
-    private KeyWrapperUtil() {
-    }
-
     public static SignatureSignerContext createSignatureSignerContext(KeyWrapper keyWrapper) {
         switch (keyWrapper.getType()) {
             case KeyType.EC:
@@ -36,5 +33,8 @@ public class KeyWrapperUtil {
             default:
                 throw new IllegalArgumentException("No signer provider for key algorithm type " + keyWrapper.getType());
         }
+    }
+
+    private KeyWrapperUtil() {
     }
 }

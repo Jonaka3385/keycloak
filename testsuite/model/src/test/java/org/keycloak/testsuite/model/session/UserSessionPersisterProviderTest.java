@@ -814,34 +814,6 @@ public class UserSessionPersisterProviderTest extends KeycloakModelTest {
         });
     }
 
-    protected static UserSessionModel[] createSessions(KeycloakSession session, String realmId, boolean rememberMe) {
-        RealmModel realm = session.realms().getRealm(realmId);
-        session.getContext().setRealm(realm);
-        UserSessionModel[] sessions = new UserSessionModel[3];
-        sessions[0] = session.sessions().createUserSession(null, realm, session.users().getUserByUsername(realm, "user1"), "user1", "127.0.0.1", "form", rememberMe, null, null, UserSessionModel.SessionPersistenceState.PERSISTENT);
-
-        createClientSession(session, realmId, realm.getClientByClientId("test-app"), sessions[0], "http://redirect", "state");
-        createClientSession(session, realmId, realm.getClientByClientId("third-party"), sessions[0], "http://redirect", "state");
-
-        sessions[1] = session.sessions().createUserSession(null, realm, session.users().getUserByUsername(realm, "user1"), "user1", "127.0.0.2", "form", rememberMe, null, null, UserSessionModel.SessionPersistenceState.PERSISTENT);
-        createClientSession(session, realmId, realm.getClientByClientId("test-app"), sessions[1], "http://redirect", "state");
-
-        sessions[2] = session.sessions().createUserSession(null, realm, session.users().getUserByUsername(realm, "user2"), "user2", "127.0.0.3", "form", rememberMe, null, null, UserSessionModel.SessionPersistenceState.PERSISTENT);
-        createClientSession(session, realmId, realm.getClientByClientId("test-app"), sessions[2], "http://redirect", "state");
-
-        return sessions;
-    }
-
-    // KEYCLOAK-1999
-    @Test
-    public void testNoSessions() {
-        inComittedTransaction(session -> {
-            UserSessionPersisterProvider persister = session.getProvider(UserSessionPersisterProvider.class);
-            Stream<UserSessionModel> sessions = persister.loadUserSessionsStream(0, 1, true, "");
-            Assert.assertEquals(0, sessions.count());
-        });
-    }
-
     @Deprecated(since = "26.5", forRemoval = true)
     @Test
     public void testUserSessionRememberMeMigration() {
@@ -931,69 +903,6 @@ public class UserSessionPersisterProviderTest extends KeycloakModelTest {
         assertEquals(initialCount, getPersistedUserSessionsCount());
     }
 
-    private UserSessionCount getUserSessionCount() {
-        if (InfinispanUtils.isEmbeddedInfinispan()) {
-            return MultiSiteUtils.isPersistentSessionsEnabled() ?
-                    new UserSessionCount(getPersistedUserSessionsCount(), getEmbeddedCachedUserSessionsCount()) :
-                    new UserSessionCount(-1, getEmbeddedCachedUserSessionsCount());
-
-        }
-        return MultiSiteUtils.isPersistentSessionsEnabled() ?
-                new UserSessionCount(getPersistedUserSessionsCount(), -1) :
-                new UserSessionCount(-1, getRemoteCachedUserSessionsCount());
-    }
-
-    private void assertSessionCount(int offset, UserSessionCount initial) {
-        UserSessionCount current = getUserSessionCount();
-        if (initial.database() != -1) {
-            assertEquals("Wrong number of session in database", initial.database() + offset, current.database());
-        } else {
-            assertEquals("Wrong number of session in database", initial.database(), current.database());
-        }
-        if (initial.cache() != -1) {
-            assertEquals("Wrong number of session in cache", initial.cache() + offset, current.cache());
-        } else {
-            assertEquals("Wrong number of session in cache", initial.cache(), current.cache());
-        }
-    }
-
-    private int getRemoteCachedUserSessionsCount() {
-        return withRealm(realmId, (session, ignored) -> session.getProvider(InfinispanConnectionProvider.class).getRemoteCache(USER_SESSION_CACHE_NAME).size());
-    }
-
-    private int getEmbeddedCachedUserSessionsCount() {
-        return withRealm(realmId, (session, ignored) -> session.getProvider(InfinispanConnectionProvider.class).getCache(USER_SESSION_CACHE_NAME).size());
-    }
-
-    private int getPersistedUserSessionsCount() {
-        return withRealm(realmId, (session, ignored) -> session.getProvider(UserSessionPersisterProvider.class).getUserSessionsCount(false));
-    }
-
-    @Test
-    public void testSessionExpirationBatch() {
-        Assume.assumeTrue(MultiSiteUtils.isPersistentSessionsEnabled());
-        String userId = withRealm(realmId, (session, realm) -> {
-            // enable events
-            realm.setEventsEnabled(true);
-            realm.setEnabledEventTypes(Set.of(EventType.USER_SESSION_DELETED.name()));
-            return session.users().getUserByUsername(realm, "user1").getId();
-        });
-        long eventCount = getUserSessionExpirationEventCount(userId);
-        // it seems some sessions are already present
-        int initialSessions = getPersistedUserSessionsCount();
-        // no sessions
-        eventCount = doExpirationWithSessions(0, initialSessions, eventCount);
-
-        // create half batch size sessions
-        eventCount = doExpirationWithSessions(Math.max(1, JpaUserSessionPersisterProviderFactory.DEFAULT_EXPIRATION_BATCH / 2), initialSessions, eventCount);
-
-        // exactly batch size sessions
-        eventCount = doExpirationWithSessions(JpaUserSessionPersisterProviderFactory.DEFAULT_EXPIRATION_BATCH, initialSessions, eventCount);
-
-        // double batch size sessions
-        doExpirationWithSessions(JpaUserSessionPersisterProviderFactory.DEFAULT_EXPIRATION_BATCH * 2, initialSessions, eventCount);
-    }
-
     @Test
     public void testUserSessionWithRememberMeRemovedAfterRememberMeDisabled() {
         Assume.assumeTrue(MultiSiteUtils.isPersistentSessionsEnabled());
@@ -1067,6 +976,97 @@ public class UserSessionPersisterProviderTest extends KeycloakModelTest {
                 .setParameter("lastSessionRefresh", 0)
                 .setMaxResults(1)
                 .getSingleResult();
+    }
+
+    protected static UserSessionModel[] createSessions(KeycloakSession session, String realmId, boolean rememberMe) {
+        RealmModel realm = session.realms().getRealm(realmId);
+        session.getContext().setRealm(realm);
+        UserSessionModel[] sessions = new UserSessionModel[3];
+        sessions[0] = session.sessions().createUserSession(null, realm, session.users().getUserByUsername(realm, "user1"), "user1", "127.0.0.1", "form", rememberMe, null, null, UserSessionModel.SessionPersistenceState.PERSISTENT);
+
+        createClientSession(session, realmId, realm.getClientByClientId("test-app"), sessions[0], "http://redirect", "state");
+        createClientSession(session, realmId, realm.getClientByClientId("third-party"), sessions[0], "http://redirect", "state");
+
+        sessions[1] = session.sessions().createUserSession(null, realm, session.users().getUserByUsername(realm, "user1"), "user1", "127.0.0.2", "form", rememberMe, null, null, UserSessionModel.SessionPersistenceState.PERSISTENT);
+        createClientSession(session, realmId, realm.getClientByClientId("test-app"), sessions[1], "http://redirect", "state");
+
+        sessions[2] = session.sessions().createUserSession(null, realm, session.users().getUserByUsername(realm, "user2"), "user2", "127.0.0.3", "form", rememberMe, null, null, UserSessionModel.SessionPersistenceState.PERSISTENT);
+        createClientSession(session, realmId, realm.getClientByClientId("test-app"), sessions[2], "http://redirect", "state");
+
+        return sessions;
+    }
+
+    // KEYCLOAK-1999
+    @Test
+    public void testNoSessions() {
+        inComittedTransaction(session -> {
+            UserSessionPersisterProvider persister = session.getProvider(UserSessionPersisterProvider.class);
+            Stream<UserSessionModel> sessions = persister.loadUserSessionsStream(0, 1, true, "");
+            Assert.assertEquals(0, sessions.count());
+        });
+    }
+
+    private UserSessionCount getUserSessionCount() {
+        if (InfinispanUtils.isEmbeddedInfinispan()) {
+            return MultiSiteUtils.isPersistentSessionsEnabled() ?
+                    new UserSessionCount(getPersistedUserSessionsCount(), getEmbeddedCachedUserSessionsCount()) :
+                    new UserSessionCount(-1, getEmbeddedCachedUserSessionsCount());
+
+        }
+        return MultiSiteUtils.isPersistentSessionsEnabled() ?
+                new UserSessionCount(getPersistedUserSessionsCount(), -1) :
+                new UserSessionCount(-1, getRemoteCachedUserSessionsCount());
+    }
+
+    private void assertSessionCount(int offset, UserSessionCount initial) {
+        UserSessionCount current = getUserSessionCount();
+        if (initial.database() != -1) {
+            assertEquals("Wrong number of session in database", initial.database() + offset, current.database());
+        } else {
+            assertEquals("Wrong number of session in database", initial.database(), current.database());
+        }
+        if (initial.cache() != -1) {
+            assertEquals("Wrong number of session in cache", initial.cache() + offset, current.cache());
+        } else {
+            assertEquals("Wrong number of session in cache", initial.cache(), current.cache());
+        }
+    }
+
+    private int getRemoteCachedUserSessionsCount() {
+        return withRealm(realmId, (session, ignored) -> session.getProvider(InfinispanConnectionProvider.class).getRemoteCache(USER_SESSION_CACHE_NAME).size());
+    }
+
+    private int getEmbeddedCachedUserSessionsCount() {
+        return withRealm(realmId, (session, ignored) -> session.getProvider(InfinispanConnectionProvider.class).getCache(USER_SESSION_CACHE_NAME).size());
+    }
+
+    private int getPersistedUserSessionsCount() {
+        return withRealm(realmId, (session, ignored) -> session.getProvider(UserSessionPersisterProvider.class).getUserSessionsCount(false));
+    }
+
+    @Test
+    public void testSessionExpirationBatch() {
+        Assume.assumeTrue(MultiSiteUtils.isPersistentSessionsEnabled());
+        String userId = withRealm(realmId, (session, realm) -> {
+            // enable events
+            realm.setEventsEnabled(true);
+            realm.setEnabledEventTypes(Set.of(EventType.USER_SESSION_DELETED.name()));
+            return session.users().getUserByUsername(realm, "user1").getId();
+        });
+        long eventCount = getUserSessionExpirationEventCount(userId);
+        // it seems some sessions are already present
+        int initialSessions = getPersistedUserSessionsCount();
+        // no sessions
+        eventCount = doExpirationWithSessions(0, initialSessions, eventCount);
+
+        // create half batch size sessions
+        eventCount = doExpirationWithSessions(Math.max(1, JpaUserSessionPersisterProviderFactory.DEFAULT_EXPIRATION_BATCH / 2), initialSessions, eventCount);
+
+        // exactly batch size sessions
+        eventCount = doExpirationWithSessions(JpaUserSessionPersisterProviderFactory.DEFAULT_EXPIRATION_BATCH, initialSessions, eventCount);
+
+        // double batch size sessions
+        doExpirationWithSessions(JpaUserSessionPersisterProviderFactory.DEFAULT_EXPIRATION_BATCH * 2, initialSessions, eventCount);
     }
 
     private void triggerExpiration(int offset) {

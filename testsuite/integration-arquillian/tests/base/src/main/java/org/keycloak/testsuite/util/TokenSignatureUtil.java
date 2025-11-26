@@ -35,7 +35,6 @@ import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.keys.GeneratedEcdsaKeyProviderFactory;
-import org.keycloak.keys.GeneratedMldsaKeyProviderFactory;
 import org.keycloak.keys.GeneratedRsaKeyProviderFactory;
 import org.keycloak.keys.KeyProvider;
 import org.keycloak.protocol.oidc.OIDCConfigAttributes;
@@ -49,7 +48,7 @@ import org.keycloak.testsuite.arquillian.TestContext;
 import org.jboss.logging.Logger;
 
 public class TokenSignatureUtil {
-    private static Logger log = Logger.getLogger(TokenSignatureUtil.class);
+    private static final Logger log = Logger.getLogger(TokenSignatureUtil.class);
 
     private static final String TEST_REALM_NAME = "test";
 
@@ -123,11 +122,6 @@ public class TokenSignatureUtil {
             case Algorithm.Ed25519:
             case Algorithm.Ed448:
                 registerKeyProvider(realm, "eddsaEllipticCurveKey", jwaAlgorithmName, "eddsa-generated", adminClient, testContext);
-                break;
-            case Algorithm.ML_DSA_44:
-            case Algorithm.ML_DSA_65:
-            case Algorithm.ML_DSA_87:
-                registerKeyProvider(realm, "ML-DSA", jwaAlgorithmName, GeneratedMldsaKeyProviderFactory.ID, adminClient, testContext);
                 break;
         }
     }

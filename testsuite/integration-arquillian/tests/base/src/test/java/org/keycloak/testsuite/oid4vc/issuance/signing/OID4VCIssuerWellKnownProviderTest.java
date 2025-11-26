@@ -104,17 +104,6 @@ import static org.junit.Assert.assertTrue;
 
 public class OID4VCIssuerWellKnownProviderTest extends OID4VCIssuerEndpointTest {
 
-    private static CredentialIssuer getCredentialIssuer(KeycloakSession session) {
-        RealmModel realm = session.getContext().getRealm();
-
-        realm.setAttribute(ATTR_ENCRYPTION_REQUIRED, "true");
-        realm.setAttribute(ATTR_REQUEST_ZIP_ALGS, DEFLATE_COMPRESSION);
-        realm.setAttribute(BATCH_CREDENTIAL_ISSUANCE_BATCH_SIZE, "10");
-
-        OID4VCIssuerWellKnownProvider provider = new OID4VCIssuerWellKnownProvider(session);
-        return provider.getIssuerMetadata();
-    }
-
     @Override
     public void configureTestRealm(RealmRepresentation testRealm) {
         Map<String, String> attributes = Optional.ofNullable(testRealm.getAttributes()).orElseGet(HashMap::new);
@@ -311,6 +300,17 @@ public class OID4VCIssuerWellKnownProviderTest extends OID4VCIssuerEndpointTest 
         } catch (Exception e) {
             throw new RuntimeException("Failed to process invalid lifespan metadata response: " + e.getMessage(), e);
         }
+    }
+
+    private static CredentialIssuer getCredentialIssuer(KeycloakSession session) {
+        RealmModel realm = session.getContext().getRealm();
+
+        realm.setAttribute(ATTR_ENCRYPTION_REQUIRED, "true");
+        realm.setAttribute(ATTR_REQUEST_ZIP_ALGS, DEFLATE_COMPRESSION);
+        realm.setAttribute(BATCH_CREDENTIAL_ISSUANCE_BATCH_SIZE, "10");
+
+        OID4VCIssuerWellKnownProvider provider = new OID4VCIssuerWellKnownProvider(session);
+        return provider.getIssuerMetadata();
     }
 
     /**

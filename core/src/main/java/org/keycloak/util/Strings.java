@@ -7,7 +7,6 @@ public class Strings {
 
     /**
      * Returns true if string is null, empty, or only contains spaces
-     *
      * @param str
      * @return
      */

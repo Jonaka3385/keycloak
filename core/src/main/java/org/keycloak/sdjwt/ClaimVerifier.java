@@ -51,10 +51,6 @@ public class ClaimVerifier {
         this.contentVerifiers = contentVerifiers;
     }
 
-    public static ClaimVerifier.Builder builder() {
-        return new ClaimVerifier.Builder();
-    }
-
     public void verifyClaims(ObjectNode header, ObjectNode body) throws VerificationException {
         verifyHeaderClaims(header);
         verifyBodyClaims(body);
@@ -74,6 +70,10 @@ public class ClaimVerifier {
 
     public List<ClaimVerifier.Predicate<ObjectNode>> getContentVerifiers() {
         return contentVerifiers;
+    }
+
+    public static ClaimVerifier.Builder builder() {
+        return new ClaimVerifier.Builder();
     }
 
     /**

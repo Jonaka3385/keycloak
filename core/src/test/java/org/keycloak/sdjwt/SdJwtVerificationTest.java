@@ -221,6 +221,7 @@ public abstract class SdJwtVerificationTest {
                 .build();
 
 
+
         Function<SdJwt, VerificationException> verify = sdJwt -> {
             return assertThrows(VerificationException.class,
                     () -> sdJwt.verify(defaultIssuerVerifyingKeys(),

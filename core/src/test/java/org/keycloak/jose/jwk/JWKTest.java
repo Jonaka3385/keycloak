@@ -34,7 +34,6 @@ import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.common.util.PemUtils;
-import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.crypto.KeyType;
 import org.keycloak.rule.CryptoInitRule;
@@ -139,7 +138,7 @@ public abstract class JWKTest {
 
     @Test
     public void publicMldsa65Chain() throws Exception {
-        KeyPair keyPair = CryptoIntegration.getProvider().getKeyPairGen(Algorithm.ML_DSA_65).generateKeyPair();
+        KeyPair keyPair = CryptoIntegration.getProvider().getKeyPairGen(JavaAlgorithm.ML_DSA_65).generateKeyPair();
         PublicKey publicKey = keyPair.getPublic();
         List<X509Certificate> certificates = Arrays.asList(generateV1SelfSignedCertificate(keyPair, "Test"), generateV1SelfSignedCertificate(keyPair, "Intermediate"));
 

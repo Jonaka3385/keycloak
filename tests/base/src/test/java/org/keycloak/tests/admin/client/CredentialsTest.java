@@ -85,10 +85,11 @@ public class CredentialsTest {
     @InjectAdminEvents
     AdminEvents adminEvents;
 
-    @TempDir
-    public static File folder;
     @InjectCryptoHelper
     CryptoHelper cryptoHelper;
+
+    @TempDir
+    public static File folder;
 
     @BeforeAll
     public static void init() {

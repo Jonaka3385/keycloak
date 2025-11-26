@@ -1,7 +1,6 @@
 # Azure SQL Automation
 
 This folder contains scripts, a composite action, and Ansible helpers to:
-
 - Create an Azure SQL Server + database and the Keycloak DB user
 - Provision an Azure VM and run Maven/Keycloak tasks on it (Ansible role)
 
@@ -28,13 +27,11 @@ az provider register --namespace Microsoft.Sql
 ## Files
 
 ### Azure-specific scripts
-
 - **`azure_common.sh`** - Shared defaults and environment checks
 - **`azure_create_sql.sh`** - Create resource group, server, database and DB user using Azure CLI + sqlcmd
 - **`azure_vm_manager.sh`** - CLI wrapper to create/delete Azure VM and produce inventory via Ansible
 
 ### Common files shared with EC2 automation
-
 - **`mvn_remote_runner.sh`** - Runs the existing `mvn.yml` Ansible playbook against the created Azure or EC2 VM
 - **`keycloak_remote_installer.sh`** - Shell script that runs the Ansible playbook to install Keycloak on the
   provisioned VM
@@ -49,7 +46,6 @@ az provider register --namespace Microsoft.Sql
 **`AZURE_CREDENTIALS`** *(required)* - Service principal JSON used by the `azure/login` action
 
 Create via Azure CLI:
-
 ```bash
 az ad sp create-for-rbac \
   --name "keycloak-ci" \

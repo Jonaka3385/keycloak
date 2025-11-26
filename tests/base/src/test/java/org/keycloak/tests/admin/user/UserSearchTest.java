@@ -495,13 +495,13 @@ public class UserSearchTest extends AbstractUserTest {
 
         // Should allow searching for multiple users
         String expectedUserId2 = userIds.get(1);
-        List<UserRepresentation> multipleUsers = managedRealm.admin().users().search(String.format("id:%s %s", expectedUserId, expectedUserId2), 0 , 10);
+        List<UserRepresentation> multipleUsers = managedRealm.admin().users().search(String.format("id:%s %s", expectedUserId, expectedUserId2), 0, 10);
         assertThat(multipleUsers, hasSize(2));
         assertThat(multipleUsers.get(0).getId(), is(expectedUserId));
         assertThat(multipleUsers.get(1).getId(), is(expectedUserId2));
 
         // Should take arbitrary amount of spaces in between ids
-        List<UserRepresentation> multipleUsers2 = managedRealm.admin().users().search(String.format("id:  %s   %s  ", expectedUserId, expectedUserId2), 0 , 10);
+        List<UserRepresentation> multipleUsers2 = managedRealm.admin().users().search(String.format("id:  %s   %s  ", expectedUserId, expectedUserId2), 0, 10);
         assertThat(multipleUsers2, hasSize(2));
         assertThat(multipleUsers2.get(0).getId(), is(expectedUserId));
         assertThat(multipleUsers2.get(1).getId(), is(expectedUserId2));

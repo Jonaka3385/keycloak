@@ -78,7 +78,7 @@ runs:
           echo "AZURE_ADMIN_PASSWORD=$ADMIN_PASSWORD"
           echo "AZURE_DB_PASSWORD=$DB_PASSWORD"
         } >> $GITHUB_ENV
-
+    
     - name: Install sqlcmd (mssql-tools)
       shell: bash
       run: |

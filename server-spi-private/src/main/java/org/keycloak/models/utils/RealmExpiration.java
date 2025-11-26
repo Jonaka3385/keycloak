@@ -39,22 +39,6 @@ public record RealmExpiration(int lifespan,
                               int rememberMeMaxIdle) {
 
     /**
-     * Creates a new {@link RealmExpiration} instance from the {@link RealmModel} instance.
-     *
-     * @param realm The {@link RealmModel} instance to get the expiration settings.
-     * @return A new {@link RealmExpiration}.
-     */
-    public static RealmExpiration fromRealm(RealmModel realm) {
-        int offlineMaxIdle = SessionExpirationUtils.getOfflineSessionIdleTimeout(realm);
-        int offlineLifespan = realm.isOfflineSessionMaxLifespanEnabled() ? SessionExpirationUtils.getOfflineSessionMaxLifespan(realm) : -1;
-        int maxIdle = SessionExpirationUtils.getSsoSessionIdleTimeout(realm);
-        int lifespan = SessionExpirationUtils.getSsoSessionMaxLifespan(realm);
-        int maxIdleRememberMe = Math.max(maxIdle, realm.getSsoSessionIdleTimeoutRememberMe());
-        int lifespanRememberMe = Math.max(lifespan, realm.getSsoSessionMaxLifespanRememberMe());
-        return new RealmExpiration(lifespan, maxIdle, offlineLifespan, offlineMaxIdle, lifespanRememberMe, maxIdleRememberMe);
-    }
-
-    /**
      * Returns the lifespan for a regular session.
      *
      * @param rememberMe If the session has remember_me enabled.
@@ -114,6 +98,22 @@ public record RealmExpiration(int lifespan,
      */
     public long calculateRegularMaxIdleTimestamp(long lastRefresh, boolean rememberMe) {
         return lastRefresh + TimeUnit.SECONDS.toMillis(getMaxIdle(rememberMe));
+    }
+
+    /**
+     * Creates a new {@link RealmExpiration} instance from the {@link RealmModel} instance.
+     *
+     * @param realm The {@link RealmModel} instance to get the expiration settings.
+     * @return A new {@link RealmExpiration}.
+     */
+    public static RealmExpiration fromRealm(RealmModel realm) {
+        int offlineMaxIdle = SessionExpirationUtils.getOfflineSessionIdleTimeout(realm);
+        int offlineLifespan = realm.isOfflineSessionMaxLifespanEnabled() ? SessionExpirationUtils.getOfflineSessionMaxLifespan(realm) : -1;
+        int maxIdle = SessionExpirationUtils.getSsoSessionIdleTimeout(realm);
+        int lifespan = SessionExpirationUtils.getSsoSessionMaxLifespan(realm);
+        int maxIdleRememberMe = Math.max(maxIdle, realm.getSsoSessionIdleTimeoutRememberMe());
+        int lifespanRememberMe = Math.max(lifespan, realm.getSsoSessionMaxLifespanRememberMe());
+        return new RealmExpiration(lifespan, maxIdle, offlineLifespan, offlineMaxIdle, lifespanRememberMe, maxIdleRememberMe);
     }
 
 }
