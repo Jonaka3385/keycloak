@@ -51,8 +51,8 @@ public class InfinispanUtil {
     public static final int MAXIMUM_REPLACE_RETRIES = 25;
 
     /**
-     * @deprecated For removal. Use {@link InfinispanConnectionProvider#getNodeInfo()} instead.
      * @see TopologyInfo
+     * @deprecated For removal. Use {@link InfinispanConnectionProvider#getNodeInfo()} instead.
      */
     @Deprecated
     public static TopologyInfo getTopologyInfo(KeycloakSession session) {

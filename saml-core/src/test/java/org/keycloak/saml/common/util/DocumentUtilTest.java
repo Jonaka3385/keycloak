@@ -11,6 +11,35 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.junit.Test;
 
 public class DocumentUtilTest {
+    private static void joinThreads(int numThreads, List<Thread> threads) {
+        for (int i = 0; i < numThreads; i++) {
+            try {
+                threads.get(i).join();
+            } catch (InterruptedException ignore) {
+            }
+        }
+    }
+
+    private static List<Thread> createThreads(int numThreads, AtomicReference<Throwable> failure) {
+        CyclicBarrier barrier = new CyclicBarrier(numThreads);
+        List<Thread> threads = new ArrayList<>();
+        for (int i = 0; i < numThreads; i++) {
+            Thread thread = new Thread(() -> {
+                try {
+                    barrier.await();
+                    DocumentUtil.getDocumentBuilder();
+                } catch (ParserConfigurationException | InterruptedException | BrokenBarrierException e) {
+                    throw new RuntimeException(e);
+                } catch (ConcurrentModificationException e) {
+                    failure.set(e);
+                }
+            });
+            threads.add(thread);
+            thread.start();
+        }
+        return threads;
+    }
+
     /**
      * Verifies that {@link DocumentUtil#getDocumentBuilder()} can be called from many threads
      * without triggering the race condition described in
@@ -64,33 +93,4 @@ public class DocumentUtilTest {
             throw failure.get();
         }
     }
-
-    private static void joinThreads(int numThreads, List<Thread> threads) {
-        for (int i = 0; i < numThreads; i++) {
-            try {
-                threads.get(i).join();
-            } catch (InterruptedException ignore) {
-            }
-        }
-    }
-
-    private static List<Thread> createThreads(int numThreads, AtomicReference<Throwable> failure) {
-        CyclicBarrier barrier = new CyclicBarrier(numThreads);
-        List<Thread> threads = new ArrayList<>();
-        for (int i = 0; i < numThreads; i++) {
-            Thread thread = new Thread(() -> {
-                try {
-                    barrier.await();
-                    DocumentUtil.getDocumentBuilder();
-                } catch (ParserConfigurationException | InterruptedException | BrokenBarrierException e) {
-                    throw new RuntimeException(e);
-                } catch (ConcurrentModificationException e) {
-                    failure.set(e);
-                }
-            });
-            threads.add(thread);
-      thread.start();
-    }
-    return threads;
-  }
 }

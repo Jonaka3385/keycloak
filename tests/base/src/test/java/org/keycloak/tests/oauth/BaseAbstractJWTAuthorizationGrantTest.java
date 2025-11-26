@@ -63,18 +63,14 @@ import org.junit.jupiter.api.Assertions;
  */
 public class BaseAbstractJWTAuthorizationGrantTest {
 
-    public static String IDP_ALIAS = "authorization-grant-idp-alias";
     public static final String IDP_ISSUER = "https://authorization-grant-issuer";
-
-    @InjectOAuthIdentityProvider(config = AbstractJWTAuthorizationGrantTest.AGIdpConfig.class)
-    OAuthIdentityProvider identityProvider;
-
+    public static String IDP_ALIAS = "authorization-grant-idp-alias";
     @InjectRealm(config = AbstractJWTAuthorizationGrantTest.JWTAuthorizationGrantRealmConfig.class)
     protected ManagedRealm realm;
-
     @InjectUser(config = AbstractJWTAuthorizationGrantTest.FederatedUserConfiguration.class)
     protected ManagedUser user;
-
+    @InjectOAuthIdentityProvider(config = AbstractJWTAuthorizationGrantTest.AGIdpConfig.class)
+    OAuthIdentityProvider identityProvider;
     @InjectOAuthClient
     OAuthClient oAuthClient;
 
@@ -118,46 +114,6 @@ public class BaseAbstractJWTAuthorizationGrantTest {
 
     public OAuthIdentityProvider getIdentityProvider() {
         return identityProvider;
-    }
-
-    public static class AGIdpConfig implements OAuthIdentityProviderConfig {
-
-        @Override
-        public OAuthIdentityProviderConfigBuilder configure(OAuthIdentityProviderConfigBuilder config) {
-            return config;
-        }
-    }
-
-    public static class JWTAuthorizationGrantServerConfig extends ClientAuthIdpServerConfig {
-
-        @Override
-        public KeycloakServerConfigBuilder configure(KeycloakServerConfigBuilder config) {
-            return super.configure(config).features(Profile.Feature.JWT_AUTHORIZATION_GRANT);
-        }
-    }
-
-    public static class JWTAuthorizationGrantRealmConfig implements RealmConfig {
-
-        @Override
-        public RealmConfigBuilder configure(RealmConfigBuilder realm) {
-            realm.addClient("test-public").publicClient(true);
-            realm.addClient("authorization-grant-disabled-client").publicClient(false).secret("test-secret");
-            realm.addClient("authorization-grant-not-allowed-idp-client").publicClient(false).attribute(OIDCConfigAttributes.JWT_AUTHORIZATION_GRANT_ENABLED, "true").secret("test-secret");
-            return realm;
-        }
-    }
-
-    public static class FederatedUserConfiguration implements UserConfig {
-
-        @Override
-        public UserConfigBuilder configure(UserConfigBuilder user) {
-            return user
-                    .username("basic-user")
-                    .password("password")
-                    .email("basic@localhost")
-                    .name("First", "Last")
-                    .federatedLink(IDP_ALIAS, "basic-user-id", "basic-user");
-        }
     }
 
     protected AccessToken assertSuccess(String expectedClientId, AccessTokenResponse response) {
@@ -213,5 +169,45 @@ public class BaseAbstractJWTAuthorizationGrantTest {
                 .details(Details.CLIENT_POLICY_ERROR, expectedError)
                 .details(Details.CLIENT_POLICY_ERROR_DETAIL, expectedErrorDescription)
                 .details(Details.USERNAME, user.getUsername());
+    }
+
+    public static class AGIdpConfig implements OAuthIdentityProviderConfig {
+
+        @Override
+        public OAuthIdentityProviderConfigBuilder configure(OAuthIdentityProviderConfigBuilder config) {
+            return config;
+        }
+    }
+
+    public static class JWTAuthorizationGrantServerConfig extends ClientAuthIdpServerConfig {
+
+        @Override
+        public KeycloakServerConfigBuilder configure(KeycloakServerConfigBuilder config) {
+            return super.configure(config).features(Profile.Feature.JWT_AUTHORIZATION_GRANT);
+        }
+    }
+
+    public static class JWTAuthorizationGrantRealmConfig implements RealmConfig {
+
+        @Override
+        public RealmConfigBuilder configure(RealmConfigBuilder realm) {
+            realm.addClient("test-public").publicClient(true);
+            realm.addClient("authorization-grant-disabled-client").publicClient(false).secret("test-secret");
+            realm.addClient("authorization-grant-not-allowed-idp-client").publicClient(false).attribute(OIDCConfigAttributes.JWT_AUTHORIZATION_GRANT_ENABLED, "true").secret("test-secret");
+            return realm;
+        }
+    }
+
+    public static class FederatedUserConfiguration implements UserConfig {
+
+        @Override
+        public UserConfigBuilder configure(UserConfigBuilder user) {
+            return user
+                    .username("basic-user")
+                    .password("password")
+                    .email("basic@localhost")
+                    .name("First", "Last")
+                    .federatedLink(IDP_ALIAS, "basic-user-id", "basic-user");
+        }
     }
 }

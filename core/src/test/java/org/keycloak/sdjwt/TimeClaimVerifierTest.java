@@ -43,10 +43,9 @@ import static org.junit.Assert.fail;
 public class TimeClaimVerifierTest {
 
     private static final int TIMESTAMP2021 = 1609459200; // Fixed timestamp: 2021-01-01 00:00:00 UTC
-    private int CURRENT_TIMESTAMP;
     private static final int DEFAULT_CLOCK_SKEW_SECONDS = 20;
-
     private final ClaimVerifier timeClaimVerifier = new FixedTimeClaimVerifier(DEFAULT_CLOCK_SKEW_SECONDS, false);
+    private int CURRENT_TIMESTAMP;
 
     private static ClaimVerifier createOptsWithClockSkew(int clockSkew, boolean requireClaims) {
         final int defaultMaxLifeTime = 300;

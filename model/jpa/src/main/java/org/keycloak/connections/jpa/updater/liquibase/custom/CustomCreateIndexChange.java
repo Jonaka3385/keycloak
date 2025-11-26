@@ -60,6 +60,10 @@ public class CustomCreateIndexChange extends CreateIndexChange {
     private Long entriesInTable = null;
     private boolean logged;
 
+    private static Executor getExecutor(Database database) {
+        return Scope.getCurrentScope().getSingleton(ExecutorService.class).getExecutor(LiquibaseConstants.JDBC_EXECUTOR, database);
+    }
+
     @Override
     public SqlStatement[] generateStatements(Database database) {
         // This check is for manual migration
@@ -128,10 +132,6 @@ public class CustomCreateIndexChange extends CreateIndexChange {
         entriesInTable = getExecutor(database)
                 .queryForLong(new RawParameterizedSqlStatement(String.format("SELECT COUNT(*) FROM %s", getTableNameForSqlSelects(database, getTableName()))));
         return entriesInTable;
-    }
-
-    private static Executor getExecutor(Database database) {
-        return Scope.getCurrentScope().getSingleton(ExecutorService.class).getExecutor(LiquibaseConstants.JDBC_EXECUTOR, database);
     }
 
     private String getTableNameForSqlSelects(Database database, String tableName) {

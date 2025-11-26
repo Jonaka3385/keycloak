@@ -71,6 +71,7 @@ public abstract class AbstractLoggedInPage extends AbstractAccountPage {
 
     /**
      * Title of the account page translated into english. For example "Signing in" or "Device activity".
+     *
      * @return The translated page title
      */
     public abstract String getTranslatedPageTitle();

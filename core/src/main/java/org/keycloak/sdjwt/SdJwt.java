@@ -101,6 +101,10 @@ public class SdJwt {
                 .collect(Collectors.toList());
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     /**
      * Prepare to a nested payload to this SD-JWT.
      * <p>
@@ -114,6 +118,14 @@ public class SdJwt {
         return nestedPayload;
     }
 
+    private static List<String> getDisclosureStrings(List<SdJwtClaim> claims) {
+        List<String> disclosureStrings = new ArrayList<>();
+        claims.stream()
+                .map(SdJwtClaim::getDisclosureStrings)
+                .forEach(disclosureStrings::addAll);
+        return Collections.unmodifiableList(disclosureStrings);
+    }
+
     public String toSdJwtString() {
         List<String> parts = new ArrayList<>();
 
@@ -122,14 +134,6 @@ public class SdJwt {
         parts.add(Optional.ofNullable(keyBindingJWT).map(KeyBindingJWT::getJws).orElse(""));
 
         return String.join(OID4VCConstants.SDJWT_DELIMITER, parts);
-    }
-
-    private static List<String> getDisclosureStrings(List<SdJwtClaim> claims) {
-        List<String> disclosureStrings = new ArrayList<>();
-        claims.stream()
-                .map(SdJwtClaim::getDisclosureStrings)
-                .forEach(disclosureStrings::addAll);
-        return Collections.unmodifiableList(disclosureStrings);
     }
 
     public KeyBindingJWT getKeybindingJwt() {
@@ -156,10 +160,6 @@ public class SdJwt {
         return sdJwtString;
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
     @Override
     public String toString() {
         return sdJwtString.orElseGet(() -> {
@@ -175,6 +175,10 @@ public class SdJwt {
 
     public List<String> getDisclosures() {
         return disclosures;
+    }
+
+    public void setSdJwtString(Optional<String> sdJwtString) {
+        this.sdJwtString = sdJwtString;
     }
 
     /**
@@ -193,10 +197,6 @@ public class SdJwt {
                 verificationOpts,
                 null
         );
-    }
-
-    public void setSdJwtString(Optional<String> sdJwtString) {
-        this.sdJwtString = sdJwtString;
     }
 
     // builder for SdJwt

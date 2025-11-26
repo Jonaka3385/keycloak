@@ -11,6 +11,15 @@ import org.junit.runners.model.Statement;
 
 public class RepeatRule implements TestRule {
 
+    @Override
+    public Statement apply(Statement statement, Description description) {
+        Repeat repeat = description.getAnnotation(Repeat.class);
+        if (repeat != null && repeat.value() > 1) {
+            return new RepeatStatement(statement, repeat.value(), description);
+        }
+        return statement;
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface Repeat {

@@ -43,36 +43,16 @@ import org.jboss.logging.Logger;
  */
 public class TimeClaimNormalizer {
 
-    private static final Logger logger = Logger.getLogger(TimeClaimNormalizer.class);
-
     public static final long DEFAULT_RANDOMIZE_WINDOW = 86400; // 24h default
     public static final Strategy DEFAULT_STRATEGY = Strategy.OFF;
-
+    public static final RoundUnit DEFAULT_ROUND_UNIT = RoundUnit.SECOND;
+    private static final Logger logger = Logger.getLogger(TimeClaimNormalizer.class);
     private final Strategy strategy;
     private final long randomizeWindowSeconds;
     private final RoundUnit roundUnit;
-    public static final RoundUnit DEFAULT_ROUND_UNIT = RoundUnit.SECOND;
-
-    public Instant normalize(Instant original) {
-        if (original == null) {
-            return null;
-        }
-        return switch (strategy) {
-            case RANDOMIZE -> randomize(original);
-            case ROUND -> round(original);
-            case OFF -> original;
-        };
-    }
-
-    private Instant randomize(Instant original) {
-        long randomOffset = (long) (Math.random() * (randomizeWindowSeconds + 1));
-        return original.minusSeconds(randomOffset);
-    }
-
     public TimeClaimNormalizer(KeycloakSession session) {
         this(session.getContext().getRealm());
     }
-
     public TimeClaimNormalizer(RealmModel realm) {
         this.strategy = parseStrategy(realm.getAttribute(Oid4VciConstants.TIME_CLAIMS_STRATEGY));
         this.randomizeWindowSeconds = parseRandomizeWindow(realm.getAttribute(Oid4VciConstants.TIME_RANDOMIZE_WINDOW_SECONDS));
@@ -84,30 +64,6 @@ public class TimeClaimNormalizer {
         this.randomizeWindowSeconds =
                 randomizeWindowSeconds == null ? DEFAULT_RANDOMIZE_WINDOW : randomizeWindowSeconds;
         this.roundUnit = roundUnit == null ? DEFAULT_ROUND_UNIT : roundUnit;
-    }
-
-    private Instant round(Instant original) {
-        // Truncate in UTC by design to ensure consistent, timezone-independent rounding
-        ZonedDateTime zdt = original.atZone(ZoneOffset.UTC);
-        return switch (roundUnit) {
-            case SECOND -> zdt.truncatedTo(ChronoUnit.SECONDS).toInstant();
-            case MINUTE -> zdt.truncatedTo(ChronoUnit.MINUTES).toInstant();
-            case HOUR -> zdt.truncatedTo(ChronoUnit.HOURS).toInstant();
-            case DAY -> zdt.toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
-        };
-    }
-
-    public enum Strategy {
-        OFF,
-        RANDOMIZE,
-        ROUND
-    }
-
-    public enum RoundUnit {
-        SECOND,
-        MINUTE,
-        HOUR,
-        DAY
     }
 
     private static Strategy parseStrategy(String value) {
@@ -149,5 +105,45 @@ public class TimeClaimNormalizer {
             logger.warnf("Invalid round unit '%s'. Using default '%s'", value, DEFAULT_ROUND_UNIT);
             return DEFAULT_ROUND_UNIT;
         }
+    }
+
+    public Instant normalize(Instant original) {
+        if (original == null) {
+            return null;
+        }
+        return switch (strategy) {
+            case RANDOMIZE -> randomize(original);
+            case ROUND -> round(original);
+            case OFF -> original;
+        };
+    }
+
+    private Instant randomize(Instant original) {
+        long randomOffset = (long) (Math.random() * (randomizeWindowSeconds + 1));
+        return original.minusSeconds(randomOffset);
+    }
+
+    private Instant round(Instant original) {
+        // Truncate in UTC by design to ensure consistent, timezone-independent rounding
+        ZonedDateTime zdt = original.atZone(ZoneOffset.UTC);
+        return switch (roundUnit) {
+            case SECOND -> zdt.truncatedTo(ChronoUnit.SECONDS).toInstant();
+            case MINUTE -> zdt.truncatedTo(ChronoUnit.MINUTES).toInstant();
+            case HOUR -> zdt.truncatedTo(ChronoUnit.HOURS).toInstant();
+            case DAY -> zdt.toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
+        };
+    }
+
+    public enum Strategy {
+        OFF,
+        RANDOMIZE,
+        ROUND
+    }
+
+    public enum RoundUnit {
+        SECOND,
+        MINUTE,
+        HOUR,
+        DAY
     }
 }

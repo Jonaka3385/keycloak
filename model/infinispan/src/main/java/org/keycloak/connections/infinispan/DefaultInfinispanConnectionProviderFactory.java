@@ -158,31 +158,6 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
         factory.register(this);
     }
 
-    protected InfinispanConnectionProvider lazyInit(KeycloakSession keycloakSession) {
-        if (connectionProvider != null) {
-            return connectionProvider;
-        }
-        synchronized (this) {
-            if (connectionProvider != null) {
-                return connectionProvider;
-            }
-
-            this.cacheManager = createEmbeddedCacheManager(keycloakSession);
-            injectKeycloakTimeService(cacheManager);
-            var topologyInfo = new TopologyInfo(cacheManager);
-            var nodeInfo = NodeInfo.of(cacheManager);
-            logger.info(nodeInfo.printInfo());
-
-            this.remoteCacheManager = createRemoteCacheManager(keycloakSession);
-            this.connectionProvider = InfinispanUtils.isRemoteInfinispan() ?
-                    new RemoteInfinispanConnectionProvider(cacheManager, remoteCacheManager, topologyInfo, nodeInfo) :
-                    new DefaultInfinispanConnectionProvider(cacheManager, topologyInfo, nodeInfo);
-
-            clusterHealth = GlobalComponentRegistry.componentOf(cacheManager, ClusterHealth.class);
-            return connectionProvider;
-        }
-    }
-
     private static DefaultCacheManager getDefaultCacheManager(KeycloakSession session, ConfigurationBuilderHolder holder) {
         // This disables the JTA transaction context to avoid binding all JDBC_PING2 interactions to the current transaction
         DefaultCacheManager[] _cm = new DefaultCacheManager[1];
@@ -210,6 +185,31 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
 
         logger.debugv("Using container managed Infinispan cache container, lookup={0}", cm);
         return cm;
+    }
+
+    protected InfinispanConnectionProvider lazyInit(KeycloakSession keycloakSession) {
+        if (connectionProvider != null) {
+            return connectionProvider;
+        }
+        synchronized (this) {
+            if (connectionProvider != null) {
+                return connectionProvider;
+            }
+
+            this.cacheManager = createEmbeddedCacheManager(keycloakSession);
+            injectKeycloakTimeService(cacheManager);
+            var topologyInfo = new TopologyInfo(cacheManager);
+            var nodeInfo = NodeInfo.of(cacheManager);
+            logger.info(nodeInfo.printInfo());
+
+            this.remoteCacheManager = createRemoteCacheManager(keycloakSession);
+            this.connectionProvider = InfinispanUtils.isRemoteInfinispan() ?
+                    new RemoteInfinispanConnectionProvider(cacheManager, remoteCacheManager, topologyInfo, nodeInfo) :
+                    new DefaultInfinispanConnectionProvider(cacheManager, topologyInfo, nodeInfo);
+
+            clusterHealth = GlobalComponentRegistry.componentOf(cacheManager, ClusterHealth.class);
+            return connectionProvider;
+        }
     }
 
     protected RemoteCacheManager createRemoteCacheManager(KeycloakSession session) {

@@ -44,6 +44,11 @@ public class JWTAuthorizationGrantValidator extends AbstractBaseJWTValidator imp
     private final String scope;
     private Set<String> restrictedScopes;
 
+    private JWTAuthorizationGrantValidator(KeycloakSession session, String scope, ClientAssertionState clientAssertionState) {
+        super(session, clientAssertionState);
+        this.scope = scope;
+    }
+
     public static JWTAuthorizationGrantValidator createValidator(KeycloakSession session, ClientModel client, String assertion, String scope) {
         if (assertion == null) {
             throw new RuntimeException("Missing parameter:" + OAuth2Constants.ASSERTION);
@@ -57,11 +62,6 @@ public class JWTAuthorizationGrantValidator extends AbstractBaseJWTValidator imp
         } catch (JWSInputException e) {
             throw new RuntimeException("The provided assertion is not a valid JWT");
         }
-    }
-
-    private JWTAuthorizationGrantValidator(KeycloakSession session, String scope, ClientAssertionState clientAssertionState) {
-        super(session, clientAssertionState);
-        this.scope = scope;
     }
 
     public void validateClient() {

@@ -56,6 +56,7 @@ public abstract class AbstractBooleanEvaluator extends BooleanConditionParserBas
 
     /**
      * The grammar defines escapes as '\)' and '\\'.
+     *
      * @param rawText The raw text from the ParameterText token.
      * @return A clean, un-escaped string.
      */

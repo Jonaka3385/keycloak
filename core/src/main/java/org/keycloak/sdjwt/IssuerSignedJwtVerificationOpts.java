@@ -36,12 +36,12 @@ public class IssuerSignedJwtVerificationOpts extends ClaimVerifier {
         super(headerVerifiers, contentVerifiers);
     }
 
-    public void verify(JwsToken tokenToVerify) throws VerificationException {
-        super.verifyClaims(tokenToVerify.getJwsHeaderAsNode(), tokenToVerify.getPayload());
-    }
-
     public static IssuerSignedJwtVerificationOpts.Builder builder() {
         return new IssuerSignedJwtVerificationOpts.Builder();
+    }
+
+    public void verify(JwsToken tokenToVerify) throws VerificationException {
+        super.verifyClaims(tokenToVerify.getJwsHeaderAsNode(), tokenToVerify.getPayload());
     }
 
     public static class Builder extends ClaimVerifier.Builder {
