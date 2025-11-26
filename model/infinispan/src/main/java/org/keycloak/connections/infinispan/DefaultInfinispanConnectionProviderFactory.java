@@ -170,16 +170,26 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
             this.cacheManager = createEmbeddedCacheManager(keycloakSession);
             injectKeycloakTimeService(cacheManager);
             var topologyInfo = new TopologyInfo(cacheManager);
-            logger.infof(topologyInfo.toString());
+            var nodeInfo = NodeInfo.of(cacheManager);
+            logger.info(nodeInfo.printInfo());
 
             this.remoteCacheManager = createRemoteCacheManager(keycloakSession);
             this.connectionProvider = InfinispanUtils.isRemoteInfinispan() ?
-                    new RemoteInfinispanConnectionProvider(cacheManager, remoteCacheManager, topologyInfo) :
-                    new DefaultInfinispanConnectionProvider(cacheManager, topologyInfo);
+                    new RemoteInfinispanConnectionProvider(cacheManager, remoteCacheManager, topologyInfo, nodeInfo) :
+                    new DefaultInfinispanConnectionProvider(cacheManager, topologyInfo, nodeInfo);
 
             clusterHealth = GlobalComponentRegistry.componentOf(cacheManager, ClusterHealth.class);
             return connectionProvider;
         }
+    }
+
+    private static DefaultCacheManager getDefaultCacheManager(KeycloakSession session, ConfigurationBuilderHolder holder) {
+        // This disables the JTA transaction context to avoid binding all JDBC_PING2 interactions to the current transaction
+        DefaultCacheManager[] _cm = new DefaultCacheManager[1];
+        //noinspection resource
+        KeycloakModelUtils.suspendJtaTransaction(session.getKeycloakSessionFactory(), () ->
+                _cm[0] = new DefaultCacheManager(holder, true));
+        return _cm[0];
     }
 
     protected EmbeddedCacheManager createEmbeddedCacheManager(KeycloakSession session) {
@@ -199,15 +209,6 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
         cm.getCache(CRL_CACHE_NAME, true);
 
         logger.debugv("Using container managed Infinispan cache container, lookup={0}", cm);
-        return cm;
-    }
-
-    private static DefaultCacheManager getDefaultCacheManager(KeycloakSession session, ConfigurationBuilderHolder holder) {
-        // This disables the JTA transaction context to avoid binding all JDBC_PING2 interactions to the current transaction
-        DefaultCacheManager[] _cm = new DefaultCacheManager[1];
-        KeycloakModelUtils.suspendJtaTransaction(session.getKeycloakSessionFactory(), () ->
-                _cm[0] = new DefaultCacheManager(holder, true));
-        var cm = _cm[0];
         return cm;
     }
 

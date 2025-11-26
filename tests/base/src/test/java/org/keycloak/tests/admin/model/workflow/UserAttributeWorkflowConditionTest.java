@@ -14,19 +14,23 @@ import org.keycloak.models.UserModel;
 import org.keycloak.models.workflow.ResourceOperationType;
 import org.keycloak.models.workflow.RestartWorkflowStepProviderFactory;
 import org.keycloak.models.workflow.SetUserAttributeStepProviderFactory;
+import org.keycloak.models.workflow.Workflow;
+import org.keycloak.models.workflow.WorkflowProvider;
+import org.keycloak.models.workflow.WorkflowStateProvider;
 import org.keycloak.models.workflow.conditions.UserAttributeWorkflowConditionFactory;
 import org.keycloak.representations.userprofile.config.UPConfig;
 import org.keycloak.representations.userprofile.config.UPConfig.UnmanagedAttributePolicy;
 import org.keycloak.representations.workflows.WorkflowRepresentation;
-import org.keycloak.representations.workflows.WorkflowSetRepresentation;
 import org.keycloak.representations.workflows.WorkflowStepRepresentation;
 import org.keycloak.testframework.annotations.KeycloakIntegrationTest;
 import org.keycloak.testframework.realm.UserConfigBuilder;
+import org.keycloak.testframework.remote.providers.runonserver.RunOnServer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -70,6 +74,41 @@ public class UserAttributeWorkflowConditionTest extends AbstractWorkflowTest {
         HashMap<String, List<String>> values = new HashMap<>(expected);
         values.put("d", List.of("d1"));
         assertUserAttribute("user-4", true, values);
+    }
+
+    @Test
+    public void testActivateWorkflowForEligibleResources() {
+        // create some users with attributes
+        for (int i = 0; i < 10; i++) {
+            try (Response response = managedRealm.admin().users().create(UserConfigBuilder.create().username("user-with-attr-" + i)
+                    .attribute("key", "value").build())) {
+                assertThat(response.getStatus(), is(Status.CREATED.getStatusCode()));
+            }
+
+        }
+
+        createWorkflow(Map.of("key", List.of("value")));
+
+        runOnServer.run((RunOnServer) session -> {
+            // check the same users are now scheduled to run the second step.
+            WorkflowProvider provider = session.getProvider(WorkflowProvider.class);
+            List<Workflow> registeredWorkflows = provider.getWorkflows().toList();
+            assertThat(registeredWorkflows, hasSize(1));
+            // activate the workflow for all eligible users
+            provider.activateForAllEligibleResources(registeredWorkflows.get(0));
+        });
+
+        runOnServer.run((RunOnServer) session -> {
+            // check the same users are now scheduled to run the second step.
+            WorkflowProvider provider = session.getProvider(WorkflowProvider.class);
+            List<Workflow> registeredWorkflows = provider.getWorkflows().toList();
+            assertThat(registeredWorkflows, hasSize(1));
+            Workflow workflow = registeredWorkflows.get(0);
+            // check workflow was correctly assigned to the users
+            WorkflowStateProvider stateProvider = session.getProvider(WorkflowStateProvider.class);
+            List<WorkflowStateProvider.ScheduledStep> scheduledSteps = stateProvider.getScheduledStepsByWorkflow(workflow);
+            assertThat(scheduledSteps, hasSize(10));
+        });
     }
 
     private void assertUserAttribute(String username, boolean shouldExist, String... values) {
@@ -117,7 +156,7 @@ public class UserAttributeWorkflowConditionTest extends AbstractWorkflowTest {
                 .reduce((a, b) -> a + " AND " + b)
                 .orElse(null);
 
-        WorkflowSetRepresentation expectedWorkflows = WorkflowRepresentation.withName("myworkflow")
+        WorkflowRepresentation expectedWorkflow = WorkflowRepresentation.withName("myworkflow")
                 .onEvent(ResourceOperationType.USER_ADDED.name())
                 .onCondition(attributeCondition)
                 .withSteps(
@@ -133,7 +172,7 @@ public class UserAttributeWorkflowConditionTest extends AbstractWorkflowTest {
 
         WorkflowsResource workflows = managedRealm.admin().workflows();
 
-        try (Response response = workflows.create(expectedWorkflows)) {
+        try (Response response = workflows.create(expectedWorkflow)) {
             assertThat(response.getStatus(), is(Status.CREATED.getStatusCode()));
         }
     }

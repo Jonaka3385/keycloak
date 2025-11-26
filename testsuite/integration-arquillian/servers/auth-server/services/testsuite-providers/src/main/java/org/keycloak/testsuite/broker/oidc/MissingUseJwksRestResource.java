@@ -17,7 +17,6 @@
 
 package org.keycloak.testsuite.broker.oidc;
 
-import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
@@ -67,8 +66,6 @@ public class MissingUseJwksRestResource {
                         return ecKey;
                     } else if (k.getType().equals(KeyType.OKP)) {
                         return b.okp(k.getPublicKey(), k.getUse());
-                    } else if (k.getType().equals(KeyType.AKP)) {
-                        return b.akp((PublicKey) k.getPublicKey(), k.getUse());
                     }
                     return null;
                 })

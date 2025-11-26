@@ -22,9 +22,10 @@ import org.keycloak.testframework.events.AdminEventAssertion;
 import org.keycloak.testframework.realm.UserConfigBuilder;
 import org.keycloak.testframework.server.KeycloakServerConfig;
 import org.keycloak.testframework.server.KeycloakServerConfigBuilder;
+import org.keycloak.testframework.util.ApiUtil;
 import org.keycloak.tests.utils.Assert;
+import org.keycloak.tests.utils.admin.AdminApiUtil;
 import org.keycloak.tests.utils.admin.AdminEventPaths;
-import org.keycloak.tests.utils.admin.ApiUtil;
 import org.keycloak.testsuite.federation.UserMapStorageFactory;
 
 import org.junit.jupiter.api.Assertions;
@@ -100,11 +101,11 @@ public class UserFedarationTest extends AbstractUserTest {
         hashedPassword.setUserLabel("label");
         hashedPassword.setType(CredentialRepresentation.PASSWORD);
 
-        userRepresentation.setCredentials(Arrays.asList(hashedPassword));
+        userRepresentation.setCredentials(List.of(hashedPassword));
         String userId = ApiUtil.getCreatedId(managedRealm.admin().users().create(userRepresentation));
         Assert.assertFalse(StorageId.isLocalStorage(userId));
 
-        UserResource user = ApiUtil.findUserByUsernameId(managedRealm.admin(), username);
+        UserResource user = AdminApiUtil.findUserByUsernameId(managedRealm.admin(), username);
         List<CredentialRepresentation> credentials = user.credentials();
         Assertions.assertNotNull(credentials);
         Assertions.assertEquals(1, credentials.size());

@@ -19,7 +19,6 @@ package org.keycloak.jose.jwk;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
@@ -51,8 +50,7 @@ public class ServerJWKTest {
 
     @Test
     public void publicEd25519() throws Exception {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(Algorithm.Ed25519);
-        KeyPair keyPair = keyGen.generateKeyPair();
+        KeyPair keyPair = KeyUtils.generateEddsaKeyPair(Algorithm.Ed25519);
 
         PublicKey publicKey = keyPair.getPublic();
         JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(keyPair.getPublic())).algorithm(Algorithm.EdDSA).okp(publicKey);
@@ -82,8 +80,7 @@ public class ServerJWKTest {
 
     @Test
     public void publicEd448() throws Exception {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(Algorithm.Ed448);
-        KeyPair keyPair = keyGen.generateKeyPair();
+        KeyPair keyPair = KeyUtils.generateEddsaKeyPair(Algorithm.Ed448);
 
         PublicKey publicKey = keyPair.getPublic();
         JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(keyPair.getPublic())).algorithm(Algorithm.EdDSA).okp(publicKey);
@@ -109,37 +106,6 @@ public class ServerJWKTest {
         byte[] data = "Some test string".getBytes(StandardCharsets.UTF_8);
         byte[] sign = sign(data, JavaAlgorithm.Ed448, keyPair.getPrivate());
         verify(data, sign, JavaAlgorithm.Ed448, publicKeyFromJwk);
-    }
-
-    @Test
-    public void publicMLDSA65() throws Exception {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(Algorithm.ML_DSA_65);
-        KeyPair keyPair = keyGen.generateKeyPair();
-
-        PublicKey publicKey = keyPair.getPublic();
-        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(keyPair.getPublic())).algorithm(Algorithm.ML_DSA_65).akp(publicKey);
-
-        assertEquals("AKP", jwk.getKeyType());
-        assertEquals("ML-DSA-65", jwk.getAlgorithm());
-        assertEquals("sig", jwk.getPublicKeyUse());
-
-        assertTrue(jwk instanceof AKPPublicJWK);
-
-        AKPPublicJWK akpJwk = (AKPPublicJWK) jwk;
-
-        assertEquals("ML-DSA-65", akpJwk.getAlgorithm());
-        assertNotNull(akpJwk.getPub());
-
-        String jwkJson = JsonSerialization.writeValueAsString(jwk);
-
-        JWKParser parser = JWKParser.create().parse(jwkJson);
-        PublicKey publicKeyFromJwk = parser.toPublicKey();
-
-        assertArrayEquals(publicKey.getEncoded(), publicKeyFromJwk.getEncoded());
-
-        byte[] data = "Some test string".getBytes(StandardCharsets.UTF_8);
-        byte[] sign = sign(data, JavaAlgorithm.ML_DSA_65, keyPair.getPrivate());
-        assertTrue(verify(data, sign, JavaAlgorithm.ML_DSA_65, publicKeyFromJwk));
     }
 
     private byte[] sign(byte[] data, String javaAlgorithm, PrivateKey key) throws Exception {

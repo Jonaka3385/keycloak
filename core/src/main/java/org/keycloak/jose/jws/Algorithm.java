@@ -42,14 +42,11 @@ public enum Algorithm {
     ES512(AlgorithmType.ECDSA, null),
     EdDSA(AlgorithmType.EDDSA, null),
     Ed25519(AlgorithmType.EDDSA, null),
-    Ed448(AlgorithmType.EDDSA, null),
-    ML_DSA_44(AlgorithmType.ML_DSA, null),
-    ML_DSA_65(AlgorithmType.ML_DSA, null),
-    ML_DSA_87(AlgorithmType.ML_DSA, null),
+    Ed448(AlgorithmType.EDDSA, null)
     ;
 
-    private AlgorithmType type;
-    private SignatureProvider provider;
+    private final AlgorithmType type;
+    private final SignatureProvider provider;
 
     Algorithm(AlgorithmType type, SignatureProvider provider) {
         this.type = type;

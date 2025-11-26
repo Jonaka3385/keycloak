@@ -17,7 +17,6 @@
 
 package org.keycloak.testsuite.broker.oidc;
 
-import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,8 +64,6 @@ public class UnsupportedKeyJwksRestResource {
                         return b.ec(k.getPublicKey(), k.getUse());
                     } else if (k.getType().equals(KeyType.OKP)) {
                         return b.okp(k.getPublicKey(), k.getUse());
-                    } else if (k.getType().equals(KeyType.AKP)) {
-                        return b.akp((PublicKey) k.getPublicKey(), k.getUse());
                     }
                     return null;
                 })

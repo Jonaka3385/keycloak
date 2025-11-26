@@ -34,7 +34,7 @@ import org.keycloak.keys.GeneratedEcdsaKeyProviderFactory;
 import org.keycloak.keys.KeyProvider;
 import org.keycloak.representations.idm.ComponentRepresentation;
 import org.keycloak.representations.idm.KeysMetadataRepresentation;
-import org.keycloak.tests.utils.admin.ApiUtil;
+import org.keycloak.testframework.util.ApiUtil;
 
 import org.junit.jupiter.api.Assertions;
 
@@ -68,9 +68,6 @@ public class KeyUtils {
     }
 
     public static KeyPair generateMLDSAKey(String algorithm) throws NoSuchAlgorithmException, NoSuchProviderException {
-        if (!JavaAlgorithm.isMldsaJavaAlgorithm(algorithm)) {
-            throw new NoSuchAlgorithmException("Not a ML-DSA Algorithm");
-        }
         KeyPairGenerator kpg = CryptoIntegration.getProvider().getKeyPairGen(algorithm);
         return kpg.generateKeyPair();
     }

@@ -41,14 +41,6 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
 
     public static final String REQUIRES_SHORT_STATE_PARAMETER = "requiresShortStateParameter";
 
-    public static final String JWT_AUTHORIZATION_GRANT_ENABLED = "jwtAuthorizationGrantEnabled";
-
-    public static final String JWT_AUTHORIZATION_GRANT_ASSERTION_REUSE_ALLOWED = "jwtAuthorizationGrantAssertionReuseAllowed";
-
-    public static final String JWT_AUTHORIZATION_GRANT_MAX_ALLOWED_ASSERTION_EXPIRATION = "jwtAuthorizationGrantMaxAllowedAssertionExpiration";
-
-    public static final String JWT_AUTHORIZATION_GRANT_ASSERTION_SIGNATURE_ALG = "jwtAuthorizationGrantAssertionSignatureAlg";
-
     public OAuth2IdentityProviderConfig(IdentityProviderModel model) {
         super(model);
     }
@@ -122,11 +114,8 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
     }
     
     public boolean isJWTAuthentication() {
-        if (getClientAuthMethod().equals(OIDCLoginProtocol.CLIENT_SECRET_JWT)
-                || getClientAuthMethod().equals(OIDCLoginProtocol.PRIVATE_KEY_JWT)) {
-            return true;
-        }
-        return false;
+        return getClientAuthMethod().equals(OIDCLoginProtocol.CLIENT_SECRET_JWT)
+                || getClientAuthMethod().equals(OIDCLoginProtocol.PRIVATE_KEY_JWT);
     }
 
     public boolean isBasicAuthentication(){
@@ -169,22 +158,6 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
         return Boolean.parseBoolean(getConfig().getOrDefault(PKCE_ENABLED, "false"));
     }
 
-    public boolean getJwtAuthorizationGrantEnabled() {
-        return Boolean.parseBoolean(getConfig().getOrDefault(JWT_AUTHORIZATION_GRANT_ENABLED, "false"));
-    }
-
-    public boolean getJwtAuthorizationGrantAssertionReuseAllowed() {
-        return Boolean.parseBoolean(getConfig().getOrDefault(JWT_AUTHORIZATION_GRANT_ASSERTION_REUSE_ALLOWED, "false"));
-    }
-
-    public int getJwtAuthorizationGrantMaxAllowedAssertionExpiration() {
-        return Integer.parseInt(getConfig().getOrDefault(JWT_AUTHORIZATION_GRANT_MAX_ALLOWED_ASSERTION_EXPIRATION, "300"));
-    }
-
-    public String getJwtAuthorizationGrantAssertionSignatureAlg() {
-        return getConfig().get(JWT_AUTHORIZATION_GRANT_ASSERTION_SIGNATURE_ALG);
-    }
-
     public void setPkceEnabled(boolean enabled) {
         getConfig().put(PKCE_ENABLED, String.valueOf(enabled));
     }
@@ -215,11 +188,8 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
 
 
     public boolean isJwtX509HeadersEnabled() {
-        if (getClientAuthMethod().equals(OIDCLoginProtocol.PRIVATE_KEY_JWT)
-            && Boolean.parseBoolean(getConfig().getOrDefault(JWT_X509_HEADERS_ENABLED, "false"))) {
-            return true;
-        }
-        return false;
+        return getClientAuthMethod().equals(OIDCLoginProtocol.PRIVATE_KEY_JWT)
+                && Boolean.parseBoolean(getConfig().getOrDefault(JWT_X509_HEADERS_ENABLED, "false"));
     }
 
     public void setJwtX509HeadersEnabled(boolean enabled) {

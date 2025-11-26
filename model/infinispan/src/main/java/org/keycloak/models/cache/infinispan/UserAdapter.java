@@ -485,7 +485,7 @@ public class UserAdapter implements CachedUserModel {
 
     @Override
     public void joinGroup(GroupModel group) {
-        if (group.getType() == Type.REALM && cached.getGroups(keycloakSession, modelSupplier).contains(group.getId())) {
+        if (group.getType() == Type.REALM && updated == null && cached.getGroups(keycloakSession, modelSupplier).contains(group.getId())) {
             return;
         }
         getDelegateForUpdate();
@@ -511,9 +511,8 @@ public class UserAdapter implements CachedUserModel {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof UserModel)) return false;
+        if (!(o instanceof UserModel that)) return false;
 
-        UserModel that = (UserModel) o;
         return that.getId().equals(getId());
     }
 

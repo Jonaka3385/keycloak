@@ -16,29 +16,19 @@
  */
 package org.keycloak.keys;
 
-import org.keycloak.component.ComponentModel;
-import org.keycloak.component.ComponentValidationException;
-import org.keycloak.crypto.Algorithm;
-import org.keycloak.crypto.JavaAlgorithm;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.RealmModel;
-import org.keycloak.provider.ConfigurationValidationHelper;
-import org.keycloak.provider.ProviderConfigProperty;
-import org.keycloak.provider.ProviderConfigurationBuilder;
-
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.spec.NamedParameterSpec;
 
-import static org.keycloak.provider.ProviderConfigProperty.LIST_TYPE;
+import org.keycloak.component.ComponentModel;
+import org.keycloak.component.ComponentValidationException;
+import org.keycloak.crypto.JavaAlgorithm;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
+import org.keycloak.provider.ConfigurationValidationHelper;
+import org.keycloak.provider.ProviderConfigurationBuilder;
 
 public abstract class AbstractMldsaKeyProviderFactory implements KeyProviderFactory {
-
-    protected static final String MLDSA_PRIVATE_KEY_KEY = "mldsaPrivateKey";
-    protected static final String MLDSA_PUBLIC_KEY_KEY = "mldsaPublicKey";
-
-    protected static ProviderConfigProperty MLDSA_PROPERTY = new ProviderConfigProperty("ML-DSA", "Generates ML-DSA keys",
-            LIST_TYPE, Algorithm.ML_DSA_44, Algorithm.ML_DSA_65, Algorithm.ML_DSA_87);
 
     public final static ProviderConfigurationBuilder configurationBuilder() {
         return ProviderConfigurationBuilder.create()

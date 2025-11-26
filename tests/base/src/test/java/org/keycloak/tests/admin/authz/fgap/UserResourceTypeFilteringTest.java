@@ -434,7 +434,7 @@ public class UserResourceTypeFilteringTest extends AbstractPermissionTest {
 
         // create users
         for (int i = 0; i < 4; i++) {
-            String userId = ApiUtil.handleCreatedResponse(realm.admin().users().create(UserConfigBuilder.create()
+            String userId = ApiUtil.getCreatedId(realm.admin().users().create(UserConfigBuilder.create()
                     .username("user" + i)
                     .password("password")
                     .firstName("user")
@@ -455,7 +455,7 @@ public class UserResourceTypeFilteringTest extends AbstractPermissionTest {
         realm.cleanup().add(r -> r.users().get(myadmin.getId()).roles().clientLevel(clientUuid).remove(List.of(viewRealmRole)));
 
         // Create sessions for user1, user2 and user3
-        Client httpClient = Keycloak.getClientProvider().newRestEasyClient(null, null, true);;
+        Client httpClient = Keycloak.getClientProvider().newRestEasyClient(null, null, true);
         List<Keycloak> keycloakInstances = List.of();
         try {
             keycloakInstances = Stream.of("user1", "user2", "user3")
@@ -503,7 +503,7 @@ public class UserResourceTypeFilteringTest extends AbstractPermissionTest {
 
         // assign role to users
         for (String username : List.of("user_x", "user_y", "user_z")) {
-            String userId = ApiUtil.handleCreatedResponse(realm.admin().users().create(UserConfigBuilder.create()
+            String userId = ApiUtil.getCreatedId(realm.admin().users().create(UserConfigBuilder.create()
                     .username(username)
                     .password("password")
                     .firstName("user")

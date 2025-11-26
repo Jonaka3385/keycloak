@@ -34,6 +34,7 @@ import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.KeyUtils;
 import org.keycloak.common.util.PemUtils;
+import org.keycloak.crypto.Algorithm;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.crypto.KeyType;
 import org.keycloak.rule.CryptoInitRule;
@@ -76,12 +77,12 @@ public abstract class JWKTest {
         assertTrue(jwk instanceof RSAPublicJWK);
         assertNotNull(((RSAPublicJWK) jwk).getModulus());
         assertNotNull(((RSAPublicJWK) jwk).getPublicExponent());
-        assertNotNull(((RSAPublicJWK) jwk).getX509CertificateChain());
-        assertEquals(PemUtils.encodeCertificate(certificate), ((RSAPublicJWK) jwk).getX509CertificateChain()[0]);
-        assertNotNull(((RSAPublicJWK) jwk).getSha1x509Thumbprint());
-        assertEquals(PemUtils.generateThumbprint(((RSAPublicJWK) jwk).getX509CertificateChain(), "SHA-1"), ((RSAPublicJWK) jwk).getSha1x509Thumbprint());
-        assertNotNull(((RSAPublicJWK) jwk).getSha256x509Thumbprint());
-        assertEquals(PemUtils.generateThumbprint(((RSAPublicJWK) jwk).getX509CertificateChain(), "SHA-256"), ((RSAPublicJWK) jwk).getSha256x509Thumbprint());
+        assertNotNull(jwk.getX509CertificateChain());
+        assertEquals(PemUtils.encodeCertificate(certificate), jwk.getX509CertificateChain()[0]);
+        assertNotNull(jwk.getSha1x509Thumbprint());
+        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-1"), jwk.getSha1x509Thumbprint());
+        assertNotNull(jwk.getSha256x509Thumbprint());
+        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-256"), jwk.getSha256x509Thumbprint());
 
         String jwkJson = JsonSerialization.writeValueAsString(jwk);
 
@@ -111,18 +112,18 @@ public abstract class JWKTest {
         assertTrue(jwk instanceof RSAPublicJWK);
         assertNotNull(((RSAPublicJWK) jwk).getModulus());
         assertNotNull(((RSAPublicJWK) jwk).getPublicExponent());
-        assertNotNull(((RSAPublicJWK) jwk).getX509CertificateChain());
+        assertNotNull(jwk.getX509CertificateChain());
 
         String[] expectedChain = new String[certificates.size()];
         for (int i = 0; i < certificates.size(); i++) {
             expectedChain[i] = PemUtils.encodeCertificate(certificates.get(i));
         }
 
-        assertArrayEquals(expectedChain, ((RSAPublicJWK) jwk).getX509CertificateChain());
-        assertNotNull(((RSAPublicJWK) jwk).getSha1x509Thumbprint());
-        assertEquals(PemUtils.generateThumbprint(((RSAPublicJWK) jwk).getX509CertificateChain(), "SHA-1"), ((RSAPublicJWK) jwk).getSha1x509Thumbprint());
-        assertNotNull(((RSAPublicJWK) jwk).getSha256x509Thumbprint());
-        assertEquals(PemUtils.generateThumbprint(((RSAPublicJWK) jwk).getX509CertificateChain(), "SHA-256"), ((RSAPublicJWK) jwk).getSha256x509Thumbprint());
+        assertArrayEquals(expectedChain, jwk.getX509CertificateChain());
+        assertNotNull(jwk.getSha1x509Thumbprint());
+        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-1"), jwk.getSha1x509Thumbprint());
+        assertNotNull(jwk.getSha256x509Thumbprint());
+        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-256"), jwk.getSha256x509Thumbprint());
 
         String jwkJson = JsonSerialization.writeValueAsString(jwk);
 
@@ -134,6 +135,46 @@ public abstract class JWKTest {
         byte[] data = "Some test string".getBytes(StandardCharsets.UTF_8);
         byte[] sign = sign(data, JavaAlgorithm.RS256, keyPair.getPrivate());
         verify(data, sign, JavaAlgorithm.RS256, publicKeyFromJwk);
+    }
+
+    @Test
+    public void publicMldsa65Chain() throws Exception {
+        KeyPair keyPair = CryptoIntegration.getProvider().getKeyPairGen(Algorithm.ML_DSA_65).generateKeyPair();
+        PublicKey publicKey = keyPair.getPublic();
+        List<X509Certificate> certificates = Arrays.asList(generateV1SelfSignedCertificate(keyPair, "Test"), generateV1SelfSignedCertificate(keyPair, "Intermediate"));
+
+        JWK jwk = JWKBuilder.create().kid(KeyUtils.createKeyId(publicKey)).algorithm("ML-DSA-65").akp(publicKey, certificates);
+
+        assertNotNull(jwk.getKeyId());
+        assertEquals("AKP", jwk.getKeyType());
+        assertEquals("ML-DSA-65", jwk.getAlgorithm());
+        assertEquals("sig", jwk.getPublicKeyUse());
+
+        assertTrue(jwk instanceof AKPPublicJWK);
+        assertNotNull(((AKPPublicJWK) jwk).getPub());
+        assertNotNull(jwk.getX509CertificateChain());
+
+        String[] expectedChain = new String[certificates.size()];
+        for (int i = 0; i < certificates.size(); i++) {
+            expectedChain[i] = PemUtils.encodeCertificate(certificates.get(i));
+        }
+
+        assertArrayEquals(expectedChain, jwk.getX509CertificateChain());
+        assertNotNull(jwk.getSha1x509Thumbprint());
+        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-1"), jwk.getSha1x509Thumbprint());
+        assertNotNull(jwk.getSha256x509Thumbprint());
+        assertEquals(PemUtils.generateThumbprint(jwk.getX509CertificateChain(), "SHA-256"), jwk.getSha256x509Thumbprint());
+
+        String jwkJson = JsonSerialization.writeValueAsString(jwk);
+
+        PublicKey publicKeyFromJwk = JWKParser.create().parse(jwkJson).toPublicKey();
+
+        // Parse
+        assertArrayEquals(publicKey.getEncoded(), publicKeyFromJwk.getEncoded());
+
+        byte[] data = "Some test string".getBytes(StandardCharsets.UTF_8);
+        byte[] sign = sign(data, JavaAlgorithm.ML_DSA_65, keyPair.getPrivate());
+        verify(data, sign, JavaAlgorithm.ML_DSA_65, publicKeyFromJwk);
     }
 
     private void testPublicEs256(String algorithm) throws Exception {

@@ -51,6 +51,7 @@ import org.mariadb.jdbc.MariaDbDataSource;
 import org.postgresql.xa.PGXADataSource;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -299,8 +300,8 @@ public class ConfigurationTest extends AbstractConfigurationTest {
         ConfigArgsConfigSource.setCliArgs("--db=postgres");
         config = createConfig();
         // username should not be set, either as the quarkus or kc property
-        assertEquals(null, config.getConfigValue("quarkus.datasource.username").getValue());
-        assertEquals(null, config.getConfigValue("kc.db-username").getValue());
+        assertNull(config.getConfigValue("quarkus.datasource.username").getValue());
+        assertNull(config.getConfigValue("kc.db-username").getValue());
     }
 
     @Test
@@ -425,6 +426,14 @@ public class ConfigurationTest extends AbstractConfigurationTest {
         System.setProperty("kc.prop3", "val3");
         config = createConfig();
         Assert.assertEquals("foo-val3", config.getConfigValue("quarkus.datasource.bar").getValue());
+    }
+
+    @Test
+    public void testDevThemeProperties() {
+        assertNull(initConfig("theme").getBoolean("cacheThemes"));
+
+        System.setProperty(org.keycloak.common.util.Environment.PROFILE, "dev");
+        assertFalse(initConfig("theme").getBoolean("cacheThemes"));
     }
 
     @Test

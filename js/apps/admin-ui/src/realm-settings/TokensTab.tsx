@@ -2,8 +2,8 @@ import type RealmRepresentation from "@keycloak/keycloak-admin-client/lib/defs/r
 import {
   HelpItem,
   KeycloakSelect,
-  SelectVariant,
   ScrollForm,
+  SelectVariant,
   useAlerts,
 } from "@keycloak/keycloak-ui-shared";
 import {
@@ -24,7 +24,7 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { FormAccess } from "../components/form/FormAccess";
 import { FixedButtonsGroup } from "../components/form/FixedButtonGroup";
-import { convertAttributeNameToForm } from "../util";
+import { beerify, convertAttributeNameToForm, sortProviders } from "../util";
 import {
   TimeSelector,
   toHumanFormat,
@@ -32,7 +32,6 @@ import {
 import { TimeSelectorControl } from "../components/time-selector/TimeSelectorControl";
 import { useServerInfo } from "../context/server-info/ServerInfoProvider";
 import { useWhoAmI } from "../context/whoami/WhoAmI";
-import { beerify, sortProviders } from "../util";
 import useIsFeatureEnabled, { Feature } from "../utils/useIsFeatureEnabled";
 
 import "./realm-settings-section.css";
@@ -58,10 +57,6 @@ export const RealmSettingsTokensTab = ({
   const defaultSigAlgOptions = sortProviders(
     serverInfo.providers!["signature"].providers,
   );
-  // Filter out ML-DSA if feature not enabled
-  const filteredSigAlgOptions = !isFeatureEnabled(Feature.ML_DSA)
-    ? defaultSigAlgOptions.filter((alg) => !alg.includes("ML-DSA"))
-    : defaultSigAlgOptions;
 
   const { control, register, reset, formState, handleSubmit } =
     useFormContext<RealmRepresentation>();
@@ -128,7 +123,7 @@ export const RealmSettingsTokensTab = ({
                   isOpen={defaultSigAlgDrpdwnIsOpen}
                   data-testid="select-default-sig-alg"
                 >
-                  {filteredSigAlgOptions!.map((p, idx) => (
+                  {defaultSigAlgOptions!.map((p, idx) => (
                     <SelectOption
                       selected={p === field.value}
                       key={`default-sig-alg-${idx}`}

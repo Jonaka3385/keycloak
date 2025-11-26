@@ -16,11 +16,12 @@
  */
 package org.keycloak.keys;
 
-import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.jboss.logging.Logger;
+import java.security.KeyPair;
 import java.util.Base64;
+import java.util.List;
+
+import org.keycloak.Config;
+import org.keycloak.common.Profile;
 import org.keycloak.common.util.MultivaluedHashMap;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.component.ComponentValidationException;
@@ -28,12 +29,12 @@ import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
+import org.keycloak.provider.EnvironmentDependentProviderFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 
-import java.security.KeyPair;
-import java.util.List;
+import org.jboss.logging.Logger;
 
-public class GeneratedMldsaKeyProviderFactory extends AbstractMldsaKeyProviderFactory {
+public class GeneratedMldsaKeyProviderFactory extends AbstractMldsaKeyProviderFactory implements EnvironmentDependentProviderFactory {
 
     private static final Logger logger = Logger.getLogger(GeneratedMldsaKeyProviderFactory.class);
 
@@ -42,7 +43,7 @@ public class GeneratedMldsaKeyProviderFactory extends AbstractMldsaKeyProviderFa
     private static final String HELP_TEXT = "Generates ML-DSA keys";
 
     private static final List<ProviderConfigProperty> CONFIG_PROPERTIES = AbstractMldsaKeyProviderFactory.configurationBuilder()
-            .property(MLDSA_PROPERTY)
+            .property(Attributes.MLDSA_ALGORITHM_PROPERTY)
             .build();
 
     @Override
@@ -105,21 +106,24 @@ public class GeneratedMldsaKeyProviderFactory extends AbstractMldsaKeyProviderFa
         try {
             keyPair = generateMldsaKeyPair(algorithm);
 
-            byte[] x509Encoded = keyPair.getPublic().getEncoded();
-            SubjectPublicKeyInfo spki = SubjectPublicKeyInfo.getInstance(x509Encoded);
-            byte[] rawPublicKeyBytes = spki.getPublicKeyData().getBytes();
-            String jwkPubKey = Base64.getUrlEncoder().withoutPadding().encodeToString(rawPublicKeyBytes);
+            byte[] publicEncoded = keyPair.getPublic().getEncoded();
+            byte[] privateEncoded = keyPair.getPrivate().getEncoded();
 
-            byte[] pkcs8Encoded = keyPair.getPrivate().getEncoded();
-            PrivateKeyInfo pki = PrivateKeyInfo.getInstance(pkcs8Encoded);
-            ASN1Encodable privateKeyParsable = pki.parsePrivateKey();
-            byte[] rawPrivateKeyBytes = privateKeyParsable.toASN1Primitive().getEncoded();
-            String jwkPrivKey = Base64.getUrlEncoder().withoutPadding().encodeToString(rawPrivateKeyBytes);
-
-            model.put(MLDSA_PRIVATE_KEY_KEY, jwkPrivKey);
-            model.put(MLDSA_PUBLIC_KEY_KEY, jwkPubKey);
+            model.put(Attributes.CERTIFICATE_KEY, Base64.getUrlEncoder().encodeToString(publicEncoded));
+            model.put(Attributes.PRIVATE_KEY_KEY, Base64.getUrlEncoder().encodeToString(privateEncoded));
         } catch (Throwable t) {
             throw new ComponentValidationException("Failed to generate ML-DSA keys", t);
         }
+    }
+
+    /**
+     * Check if the provider is supported and should be available based on the provider configuration.
+     *
+     * @param config the provider configuration
+     * @return {@code true} if the provider is supported. Otherwise, {@code false}.
+     */
+    @Override
+    public boolean isSupported(Config.Scope config) {
+        return Profile.isFeatureEnabled(Profile.Feature.PQC_ML_DSA);
     }
 }

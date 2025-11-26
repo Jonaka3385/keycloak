@@ -11,9 +11,11 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAdminClient } from "../admin-client";
-import { useAlerts } from "@keycloak/keycloak-ui-shared";
-import { ListEmptyState } from "@keycloak/keycloak-ui-shared";
-import { KeycloakDataTable } from "@keycloak/keycloak-ui-shared";
+import {
+  KeycloakDataTable,
+  ListEmptyState,
+  useAlerts,
+} from "@keycloak/keycloak-ui-shared";
 import { useRealm } from "../context/realm-context/RealmContext";
 import { MemberModal } from "../groups/MembersModal";
 import { toUser } from "../user/routes/User";
@@ -146,7 +148,7 @@ export const Members = () => {
                 selectedRows.map((user) =>
                   adminClient.organizations.addMember({
                     orgId,
-                    userId: user.id!,
+                    userId: `"${user.id!}"`,
                   }),
                 ),
               );

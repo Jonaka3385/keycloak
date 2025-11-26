@@ -96,16 +96,23 @@ public class JWKBuilder {
         return k;
     }
 
-    public JWK akp(PublicKey key, KeyUse keyUse) {
+    public JWK akp(PublicKey key, List<X509Certificate> certificates) {
         AKPPublicJWK k = new AKPPublicJWK();
 
         String kid = this.kid != null ? this.kid : KeyUtils.createKeyId(key);
         k.setKeyId(kid);
         k.setKeyType(KeyType.AKP);
         k.setAlgorithm(algorithm);
-        k.setPublicKeyUse(keyUse == null ? DEFAULT_PUBLIC_KEY_USE.getSpecName() : keyUse.getSpecName());
         k.setPub(AKPUtils.toEncodedPub(key, algorithm));
         k.setPublicKeyUse(KeyUse.SIG.getSpecName());
+
+        if (certificates != null && !certificates.isEmpty()) {
+            String[] certificateChain = new String[certificates.size()];
+            for (int i = 0; i < certificates.size(); i++) {
+                certificateChain[i] = PemUtils.encodeCertificate(certificates.get(i));
+            }
+            k.setX509CertificateChain(certificateChain);
+        }
 
         return k;
     }
