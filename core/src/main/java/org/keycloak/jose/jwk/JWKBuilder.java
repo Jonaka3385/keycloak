@@ -97,15 +97,7 @@ public class JWKBuilder {
     }
 
     public JWK akp(PublicKey key, List<X509Certificate> certificates) {
-        AKPPublicJWK k = new AKPPublicJWK();
-
-        String kid = this.kid != null ? this.kid : KeyUtils.createKeyId(key);
-        k.setKeyId(kid);
-        k.setKeyType(KeyType.AKP);
-        k.setAlgorithm(algorithm);
-        k.setPub(AKPUtils.toEncodedPub(key, algorithm));
-        k.setPublicKeyUse(KeyUse.SIG.getSpecName());
-
+        JWK k = akp(key);
         if (certificates != null && !certificates.isEmpty()) {
             String[] certificateChain = new String[certificates.size()];
             for (int i = 0; i < certificates.size(); i++) {
